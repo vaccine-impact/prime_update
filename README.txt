@@ -16,7 +16,7 @@ s5        | UNWPP (2017) | GBD 2017           | GLOBOCAN 2018
 
 Files:
 - batchrun.R 
-    This program creates batch of cohorts with information on 
+    Create batch of cohorts with information on 
     countries, vaccination year, vaccination age and vaccination coverage, and
     simulates the different comarative scenarios for these birth cohorts
     and estimate/compare vaccination impact.
