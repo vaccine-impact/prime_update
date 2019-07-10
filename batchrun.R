@@ -1,7 +1,7 @@
 # File: batchrun.R
-# This program creates batch of cohorts with information on 
-# countries, vaccination year, vaccination age and vaccination coverage, and
-# simulates the different comarative scenarios for these birth cohorts
+# Create batch of cohorts with information on 
+# countries, vaccination year, vaccination age and vaccination coverage, 
+# and simulates the different comarative scenarios for these birth cohorts
 # and estimate/compare vaccination impact.
 
 ################################################################################
@@ -112,17 +112,25 @@ estimate_vaccine_impact <- function () {
     if (i == 5) {unwpp <- T; dw <- "gbd_2017"; canc <- "2018"}
     
     ################### updated runs
-    results <- BatchRun(countries = -1, coverage = -1, agevac = -1, agecohort = -1,
-                        daly.canc.diag = 0.288, daly.canc.control = 0.049,
-                        daly.canc.metastatic = 0.451, daly.canc.terminal = 0.54, sens = -1,
-                        year_born = -1, year_vac = -1, runs = 1,
+    results <- BatchRun(countries                       = -1, 
+                        coverage                        = -1, 
+                        agevac                          = -1, 
+                        agecohort                       = -1, 
+                        sens                            = -1,
+                        year_born                       = -1, 
+                        year_vac                        = -1, 
+                        runs                            = 1,
                         vaccine_efficacy_beforesexdebut = 1,
-                        vaccine_efficacy_aftersexdebut = 0,
-                        log = -1,
-                        by_calendaryear = FALSE,
-                        use_proportions = TRUE,
-                        analyseCosts = FALSE, psa = 0, psa_vals = ".data.batch.psa",
-                        unwpp_mortality = unwpp, disability.weights = dw, canc.inc = canc
+                        vaccine_efficacy_aftersexdebut  = 0,
+                        log                             = -1,
+                        by_calendaryear                 = FALSE,
+                        use_proportions                 = TRUE,
+                        analyseCosts                    = FALSE, 
+                        psa                             = 0, 
+                        psa_vals                        = ".data.batch.psa",
+                        unwpp_mortality                 = unwpp, 
+                        disability.weights              = dw, 
+                        canc.inc                        = canc
     )
     
     ################################################################################
