@@ -25,10 +25,8 @@ Files:
     Compare burden estimates and vaccination impact from the different scenarios.
 
 Folders:
-- input
-  Input files (vaccine coverage & disease burden template)
-- results
-  Output files of disease burden estimates
+- output
+    Output files of disease burden estimates for different scenarios.
 - plots
-  Plots to visualise results
+    Plots to visualise results
 
