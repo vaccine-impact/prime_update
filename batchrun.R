@@ -26,7 +26,7 @@
 
 #-------------------------------------------------------------------------------
 # program start -- load libraries, etc
-program_start <- function ()
+program_start_batchrun <- function ()
 {
   # remove all objects from workspace
   remove (list = objects() )
@@ -42,7 +42,7 @@ program_start <- function ()
   library (doParallel)    # Foreach Parallel Adaptor for the 'parallel' Package
   library (prime)         # PRIME model
   
-} # end of function -- program_start
+} # end of function -- program_start_batchrun
 
 
 #-------------------------------------------------------------------------------
@@ -147,7 +147,7 @@ estimate_vaccine_impact <- function () {
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 # start of program
-program_start ()  # load libraries, etc
+program_start_batchrun ()  # load libraries, etc
 
 # create batch of cohorts with information on 
 # countries, vaccination year, vaccination age, vaccination coverage

@@ -9,187 +9,246 @@
 # 5) unwpp_mortality = TRUE,  disability.weights = "gbd_2017", canc.inc = "2018"
 ################################################################################
 
-print (Sys.time ())  # start time
-
-
-# load required packages
-library (data.table)    # data table
-library (ggplot2)       # graphics
-library (tictoc)
-library (countrycode)
-library (ggforce)
-library (ggpubr)
-
-# remove all objects from workspace
-remove (list = objects() )
-
-# plot file
-pdf ("plots/plots-compare.pdf")
-
-# simulation scenarios
-simulations = c("s1", "s2", "s3", "s4", "s5")
-
-################################################################################
-# Combine burden estimates from different simulations
-
-# burden estimates for different scenarios
-allburden <- NULL
-for (i in 1:length(simulations)) {
-  burdenfile <- paste0 ("output/", simulations[i], "_results.csv")
-  burden <- fread (burdenfile, header = "auto", stringsAsFactors = F)
-
-  # extract birth cohorts between 1991 & 2021
-  # burden <- burden [birthcohort >= 1991 & birthcohort <= 2021]
-
-  burden [, simulation := simulations[i]]
-  if (is.null(allburden)) {
-    allburden <- burden
-  } else {
-    allburden <- rbind (allburden, burden)
-  }
-}
-setDT (allburden)
-
-# add calendar year, cases, deaths, yll, yld, dalys
-allburden [, year   := birthcohort + age]
-allburden [, cases  := cohort_size * inc.cecx]
-allburden [, deaths := cohort_size * mort.cecx]
-allburden [, yld    := cohort_size * disability]
-allburden [, yll    := cohort_size * lifey]
-allburden [, dalys  := yll + yld]
-
-allburden [, cases_p100  := cases  / cohort_size * 100000]
-allburden [, deaths_p100 := deaths / cohort_size * 100000]
-allburden [, yld_p100    := yld    / cohort_size * 100000]
-allburden [, yll_p100    := yll    / cohort_size * 100000]
-allburden [, dalys_p100  := dalys  / cohort_size * 100000]
-
-# NA values result due to division by 0 for UNWPP simulations, 
-# since cohort size for ages 0 to 7 are 0
-allburden [is.na(allburden)] <- 0
-
-# vaccined administered to 9 year old girls
-allburden [(scenario=="post-vaccination" & age==9), vaccines := cohort_size * vaccinated, with=T]
-
-################################################################################
-# Plots
-
-plotwhat = c("cohort_size", "cases", "deaths", "yld", "yll", "dalys")
-# ,
-#              "cases_p100", "deaths_p100", "yld_p100", "yll_p100", "dalys_p100")
-
-y_axis <- c("Cohort size",
-            "Cases",
-            "Deaths",
-            "YLDs",
-            "YLLs", 
-            "DALYs")
-
-counter <- 0
-for (countries in unique (allburden$country)) {
+#-------------------------------------------------------------------------------
+# program start  -- load libraries, etc
+program_start_analyse <- function ()
+{
+  # remove all objects from workspace
+  remove (list = objects() )
   
-  if (counter <177) {  # plot subset of countries
-    counter <- counter + 1
+  # start time
+  print (Sys.time ())  
+  
+  # load libraries
+  library (data.table)    # data table
+  library (ggplot2)       # graphics
+  library (tictoc)
+  library (countrycode)
+  library (ggforce)
+  library (ggpubr)
+  
+} # end of function -- program_start_analyse
+
+
+#-------------------------------------------------------------------------------
+# Combine burden estimates from different simulation scenarios
+# Add columns for calendar year, cases, deaths, yld, yll, dalys
+# Add columns for (cases, deaths, yld, yll, dalys) per 100,000
+# Add column for number of vaccines administered
+combine_burden_estimate <- function () {
+  
+  # simulation scenarios
+  simulations = c("s1", "s2", "s3", "s4", "s5")
+  
+  # burden estimates for different simulation scenarios
+  allburden <- NULL
+  for (i in 1:length(simulations)) {
     
-    tic ()
-    print (countries)
-    country_burden <- allburden [country == countries]
+    # read burden estimate of one simulation scenario
+    burdenfile <- paste0 ("output/", simulations[i], "_results.csv")
+    burden <- fread (burdenfile, header = "auto", stringsAsFactors = F)
     
-    for (i in 1:length(plotwhat)){
-      toplot = plotwhat[i]
-      # print (ggplot (country_burden, aes(x = birthcohort)) +
-      #          geom_col (aes(y = get(toplot), col=age)) +
-      #          scale_colour_gradientn(colours=rev(rainbow(5))) +
-      #          facet_grid(scenario ~ simulation) +
-      #          theme_bw(base_size = 8) +
-      #          labs (
-      #            x="birth cohort year",
-      #            y=toplot,
-      #            title = countrycode (countries, 'iso3c', 'country.name'))
-      #            # title = countries)
-      # )
+    # set scenario number
+    burden [, simulation := simulations[i]]
+    
+    # combine burden estimate of this simulation scenario 
+    # to other simulation scenarios
+    if (is.null(allburden)) {
+      allburden <- burden
+    } else {
+      allburden <- rbind (allburden, burden)
+    }
+  }
+  
+  # set to data table
+  setDT (allburden)
+  
+  # Add columns for calendar year, cases, deaths, yld, yll, dalys
+  allburden [, year   := birthcohort + age]
+  allburden [, cases  := cohort_size * inc.cecx]
+  allburden [, deaths := cohort_size * mort.cecx]
+  allburden [, yld    := cohort_size * disability]
+  allburden [, yll    := cohort_size * lifey]
+  allburden [, dalys  := yll + yld]
+  
+  # Add columns for (cases, deaths, yld, yll, dalys) per 100,000
+  allburden [, cases_p100  := cases  / cohort_size * 100000]
+  allburden [, deaths_p100 := deaths / cohort_size * 100000]
+  allburden [, yld_p100    := yld    / cohort_size * 100000]
+  allburden [, yll_p100    := yll    / cohort_size * 100000]
+  allburden [, dalys_p100  := dalys  / cohort_size * 100000]
+  
+  # NA values result due to division by 0 for UNWPP simulations, 
+  # since cohort size for ages 0 to 7 are 0
+  allburden [is.na(allburden)] <- 0
+  
+  # Add column for number of vaccines administered
+  # vaccined administered to 9 year old girls
+  allburden [(scenario=="post-vaccination" & age==9), 
+             vaccines := cohort_size * vaccinated, with=T]
+  
+  # return comnbined burden estimates from all simulation scenarios
+  return (allburden)
+  
+} # end of function -- combine_burden_estimate
+
+
+# plot cervical cancer burden (cases, deaths, yld, yll, dalys) pre- and post-vaccination
+# plot for each country and at global level
+plot_cecx_burden_pre_post_vaccination <- function (allburden)
+{
+  
+  # ----------------------------------------------------------------------------
+  # burden comparison plot for each country
+  
+  # plot file
+  pdf ("plots/country_burden_pre_post_vaccination.pdf")
+  
+  # what burden to plot
+  plotwhat = c("cases", "deaths", "yld", "yll", "dalys")
+  # "cohort_size", 
+  # "cases_p100", "deaths_p100", "yld_p100", "yll_p100", "dalys_p100")
+  
+  y_axis <- c("Cases", "Deaths", "YLDs", "YLLs", "DALYs")
+  
+  counter <- 0
+  
+  # loop through each country
+  for (countries in unique (allburden$country)) {
+    
+    if (counter <177) {  # plot subset of countries
+      counter <- counter + 1
       
-      print (ggplot (country_burden, 
-                     aes (x = birthcohort, y = get(toplot), fill=age)) +
+      tic ()
+      print (countries)
+      country_burden <- allburden [country == countries]
+      
+      # loop through each burden metric
+      for (i in 1:length (plotwhat)) {
+        
+        # burden metric
+        toplot = plotwhat[i]
+        
+        print (ggplot (country_burden, 
+                       aes (x = birthcohort, y = get(toplot), fill=age)) +
+                 geom_bar (stat="identity") + 
+                 scale_fill_gradientn (colours = rev(rainbow(5))) + 
+                 facet_grid (scenario ~ simulation) +
+                 theme_bw (base_size = 8) +
+                 labs (
+                   x="Year of birth",
+                   y=y_axis[i],
+                   title = countrycode (countries, 'iso3c', 'country.name'))
+        )
+      }
+      
+      toc ()
+    }
+  }
+  
+  dev.off ()  # close plot file
+  
+  # ----------------------------------------------------------------------------
+  # burden comparison plot at the global level
+  
+  # plot file 
+  pdf ("plots/global_burden_pre_post_vaccination.pdf")
+  
+  # copy all burden data table
+  gburden <- copy (allburden)
+  
+  # set country column to NULL (drop country column)
+  gburden [, country := NULL]
+  
+  # apply sum function to burden columns
+  global_burden <- gburden [, lapply (.SD, sum), 
+                .SDcols = c ("cases", "deaths", "yld", "yll", "dalys"), 
+                by=.(age, scenario, type, simulation, birthcohort)]
+  
+  # global_burden <- gburden [, lapply (.SD, sum), by=.(age, scenario, type, simulation, birthcohort)]
+  # dt[, lapply(.SD, sum, na.rm=TRUE), by=category ]
+  
+
+
+  for (i in 1:length (plotwhat)) {
+    toplot = plotwhat[i]
+    
+    print (ggplot (global_burden, 
+                   aes (x = birthcohort, y = get(toplot), fill=age)) +
              geom_bar (stat="identity") + 
-             scale_fill_gradientn(colours=rev(rainbow(5))) + 
-             facet_grid(scenario ~ simulation) +
-             theme_bw(base_size = 8) +
+             scale_fill_gradientn (colours=rev(rainbow(5))) + 
+             facet_grid (scenario ~ simulation) +
+             theme_bw (base_size = 8) +
              labs (
                x="Year of birth",
-               y=y_axis[i],
-               title = countrycode (countries, 'iso3c', 'country.name')) + 
-             theme_minimal()
-             # title = countries)
-      )
+               y=y_axis[i]) + 
+             scale_x_continuous(breaks=seq(2011, 2020, 3))
+    )
+  }
+  
+  dev.off ()
+  
+  
+  # ------------------------------------------------------------------------------
+  # same plot as above but in 2 figures 
+  # fig1 -- "cases", "deaths"
+  # fig2 -- "yld",  "yll",  "dalys"
+  
+  for (j in 1:2) {
+    
+    # figure files
+    tiff (paste0 ("figures/fig", j, ".png", sep=""), 
+          units="in", width=6, height=9, res=900)
+    
+    plot_title <- c ("Lifetime burden of cervical cancer (cases, deaths) caused by HPV 16/18 pre- and post-vaccination", 
+                     "Lifetime burden of cervical cancer (YLDs, YLLs, YLDs) caused by HPV 16/18 pre- and post-vaccination")
+    
+    # 1 plot for cases, deaths (and) another plot for ylds, ylls, dalys
+    if (j == 1) {
+      plotwhat <- c("cases", "deaths")
+      y_axis   <- c("Cases", "Deaths")
+    } else {
+      plotwhat <- c("yld",  "yll",  "dalys")
+      y_axis   <- c("YLDs", "YLLs", "DALYs")
     }
     
-    toc ()
+    plot_list <- lapply (1:length(plotwhat), function (i) {
+      toplot <- plotwhat [i]
+      
+      p <- ggplot (global_burden, 
+                   aes (x = birthcohort, y = get(toplot), fill=age)) +
+        geom_bar (stat="identity") + 
+        scale_fill_gradientn(colours=rev(rainbow(5))) + 
+        facet_grid(scenario ~ simulation) +
+        theme_bw (base_size = 10) +
+        labs (
+          x="Year of birth",
+          y=y_axis[i]) + 
+        scale_x_continuous(breaks=seq(2011, 2020, 3)) + 
+        # theme_minimal () + 
+        theme (axis.text.x = element_text(size=6))
+    })
+    
+    # arrange plots in a single page
+    q <- ggarrange (plotlist=plot_list, ncol = 1, nrow = 3)
+    
+    print (
+      annotate_figure (q, 
+                       top = text_grob (plot_title [j],
+                                        color = "black", 
+                                        size = 9)))
+    
+    # save figure file 
+    dev.off ()
   }
-}
-
-dev.off ()  # close plot file
-
-################################################################################
-# Similar burden comparison as in the above plots but one plot at the global level
-
-
-gburden <- allburden 
-gburden [, country := NULL]
-global_burden <- gburden [, lapply (.SD, sum), by=.(age, scenario, type, simulation, birthcohort)]
-# dt[, lapply(.SD, sum, na.rm=TRUE), by=category ]
-
-pdf ("plots/global-compare.pdf")
-
-for (i in 1:length(plotwhat)) {
-  toplot = plotwhat[i]
   
-  print (ggplot (global_burden, 
-                 aes (x = birthcohort, y = get(toplot), fill=age)) +
-           geom_bar (stat="identity") + 
-           scale_fill_gradientn(colours=rev(rainbow(5))) + 
-           facet_grid(scenario ~ simulation) +
-           theme_bw(base_size = 8) +
-           labs (
-             x="Year of birth",
-             y=y_axis[i]) + 
-           scale_x_continuous(breaks=seq(2011, 2020, 3)) + 
-             # title = countrycode (countries, 'iso3c', 'country.name')) + 
-           theme_minimal() 
-         # title = countries) 
-  )
-}
-
-dev.off ()
-
-# ------------------------------------------------------------------------------
-#### same plot as above but in 1 page
-plotwhat = c("cohort_size", "cases", "deaths", "yld", "yll", "dalys")
-
-plot_list <- lapply (2:length(plotwhat), function (i) {
-  toplot = plotwhat[i]
+  return ()
   
-  p <- ggplot (global_burden, 
-               aes (x = birthcohort, y = get(toplot), fill=age)) +
-    geom_bar (stat="identity") + 
-    scale_fill_gradientn(colours=rev(rainbow(5))) + 
-    facet_grid(scenario ~ simulation) +
-    theme_bw(base_size = 8) +
-    labs (
-      x="Year of birth",
-      y=y_axis[i]) + 
-    scale_x_continuous(breaks=seq(2011, 2020, 3)) + 
-    theme_minimal() + 
-    theme (axis.text.x = element_text(size=6))
-})
+} # end of function -- plot_cecx_burden_pre_post_vaccination
 
 
-q <- ggarrange (plotlist=plot_list, ncol = 2, nrow = 3)
 
-print (annotate_figure(q,
-                top = text_grob("Lifetime health impact pre- and post-vaccination", color = "black", size = 14)))
 
-# ------------------------------------------------------------------------------
 
 
 
@@ -370,4 +429,25 @@ print (Sys.time ())  # end time
 #     countrycode (i, origin = "iso3c", destination = "country.name") }
 # country_list <- as.data.table (t (as.matrix (country_list)))
 # fwrite (country_list, file="country_list.csv")
+#-------------------------------------------------------------------------------
+
+
+
+
+
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+# start of program
+program_start_analyse ()  # load libraries, etc
+
+# Combine burden estimates from different simulation scenarios 
+allburden <- combine_burden_estimate ()
+
+# plot cervical cancer burden (cases, deaths, yld, yll, dalys) pre- and post-vaccination
+# plot for each country and at global level
+plot_cecx_burden_pre_post_vaccination (allburden)
+
+#-------------------------------------------------------------------------------
+print (Sys.time ())  
+# end of program
 #-------------------------------------------------------------------------------
