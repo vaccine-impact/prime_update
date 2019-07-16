@@ -27,6 +27,6 @@ Files:
 Folders:
 - output
     Output files of disease burden estimates for different scenarios.
-- plots
-    Plots to visualise results
+- results
+    Plots and tables of results
 
