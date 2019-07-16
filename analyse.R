@@ -102,7 +102,7 @@ plot_cecx_burden_pre_post_vaccination <- function (allburden)
   # burden comparison plot for each country
   
   # plot file
-  pdf ("plots/country_burden_pre_post_vaccination.pdf")
+  pdf ("results/Figure-country_burden_pre_post_vaccination.pdf")
   
   # what burden to plot
   plotwhat = c("cases", "deaths", "yld", "yll", "dalys")
@@ -138,7 +138,8 @@ plot_cecx_burden_pre_post_vaccination <- function (allburden)
                  labs (
                    x="Year of birth",
                    y=y_axis[i],
-                   title = countrycode (countries, 'iso3c', 'country.name'))
+                   title = countrycode (countries, 'iso3c', 'country.name')) +
+                 scale_x_continuous(breaks=seq(2011, 2020, 3))
         )
       }
       
@@ -152,7 +153,7 @@ plot_cecx_burden_pre_post_vaccination <- function (allburden)
   # burden comparison plot at the global level
   
   # plot file 
-  pdf ("plots/global_burden_pre_post_vaccination.pdf")
+  pdf ("results/Figure-global_burden_pre_post_vaccination.pdf")
   
   # copy all burden data table
   gburden <- copy (allburden)
@@ -242,13 +243,81 @@ plot_cecx_burden_pre_post_vaccination <- function (allburden)
     dev.off ()
   }
   
-  return ()
+  return ()  # return null
   
 } # end of function -- plot_cecx_burden_pre_post_vaccination
 
 
+# create table of country-specific cervical cancer burden
+create_table_country_burden <- function (allburden) {
+  
+  # extract burden for pre-vaccination and post-vaccination
+  pre_vac  <- allburden [scenario == "pre-vaccination"]
+  post_vac <- allburden [scenario == "post-vaccination"]
+  
+  # extract columns for country, simulation scenarios, 
+  # cases, deaths, yld, yll, dalys
+  pre_vac  <- pre_vac  [, list (country, simulation, cases, deaths, yld, yll, dalys)]
+  post_vac <- post_vac [, list (country, simulation, cases, deaths, yld, yll, dalys)]
+  
+  # burden columns
+  burden_columns <- c("cases", "deaths", "yld", "yll", "dalys")
+  
+  # summarise burden by country and simulation scenario
+  #   dt[, lapply(.SD, sum, na.rm=TRUE), by=category, .SDcols=c("a", "c", "z") ]
+  pre_vac <- pre_vac [, lapply (.SD, sum, na.rm=TRUE), 
+                      .SDcols = burden_columns, 
+                      by = .(country, simulation) ]
+  
+  post_vac <- post_vac [, lapply (.SD, sum, na.rm=TRUE), 
+                      .SDcols = burden_columns, 
+                      by = .(country, simulation) ]
+  
+  # round off burden values (no decimal point)
+  pre_vac <- pre_vac [, lapply(.SD, round, 0),
+                      .SDcols = burden_columns,
+                      by = .(country, simulation)]
 
+  post_vac <- post_vac [, lapply(.SD, round, 0),
+                      .SDcols = burden_columns,
+                      by = .(country, simulation)]
+  
+  # sort by country and simulation scenario
+  pre_vac  <- pre_vac  [order (country, simulation)]
+  post_vac <- post_vac [order (country, simulation)]
+  
+  # add country name from iso3 country code
+  pre_vac  [, Country := countrycode (pre_vac  [, country], origin = "iso3c", destination = "country.name")]
+  post_vac [, Country := countrycode (post_vac [, country], origin = "iso3c", destination = "country.name")]
+  
+  # drop column iso3 country code 
+  pre_vac  [, country := NULL]
+  post_vac [, country := NULL]
+  
+  # set Country column as first column
+  setcolorder (pre_vac,  "Country")
+  setcolorder (post_vac, "Country")
+  
+  # add pre-vaccination / post-vaccination to burden column names
+  setnames (pre_vac, 
+            old = c("simulation", "cases", "deaths", "yld", "yll", "dalys"), 
+            new = c("Scenario", "Cases (pre-vaccination)", "Deaths (pre-vaccination)", "YLDs (pre-vaccination)", "YLLs (pre-vaccination)", "DALYs (pre-vaccination)"))
+  
+  setnames (post_vac, 
+            old = c("simulation", "cases", "deaths", "yld", "yll", "dalys"), 
+            new = c("Scenario", "Cases (post-vaccination)", "Deaths (post-vaccination)", "YLDs (post-vaccination)", "YLLs (post-vaccination)", "DALYs (post-vaccination)"))
+  
+  # combine tables -- pre-vaccination (and) post-vaccination
+  burden <- pre_vac [post_vac, on = .(Country = Country, Scenario = Scenario)]
+  
+  # save burden data table
+  fwrite (burden, 
+          "results/Table-Cervical_cancer_burden_HPV_16_18.csv",
+          col.names = T, row.names = F)
+  
+  return ()  # return null
 
+} # end of function -- create_table_country_burden
 
 
 
@@ -445,7 +514,10 @@ allburden <- combine_burden_estimate ()
 
 # plot cervical cancer burden (cases, deaths, yld, yll, dalys) pre- and post-vaccination
 # plot for each country and at global level
-plot_cecx_burden_pre_post_vaccination (allburden)
+# plot_cecx_burden_pre_post_vaccination (allburden)
+
+# create table of country-specific cervical cancer burden
+create_table_country_burden (allburden)
 
 #-------------------------------------------------------------------------------
 print (Sys.time ())  
