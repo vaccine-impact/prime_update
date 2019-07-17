@@ -523,7 +523,7 @@ compute_vaccine_impact_country <- function (allburden) {
   # plot file
   pdf ("results/Figure-Country_vaccine_impact.pdf")  
   
-  counter <- 174
+  counter <- 0
   
   # loop through each country
   for (countries in unique (vaccine_impact$country)) {
@@ -694,7 +694,7 @@ allburden <- combine_burden_estimate ()
 
 # plot cervical cancer burden (cases, deaths, yld, yll, dalys) pre- and post-vaccination
 # plot for each country and at global level
-# plot_cecx_burden_pre_post_vaccination (allburden)
+plot_cecx_burden_pre_post_vaccination (allburden)
 
 # create table of country-specific cervical cancer burden
 create_table_country_burden (allburden)

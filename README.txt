@@ -24,6 +24,10 @@ Files:
 - analyse.R
     Compare burden estimates and vaccination impact from the different scenarios.
 
+- map.R
+    Create maps of cervical cancer burden (caused by HPV 16/18) averted by HPV vaccination.
+    Also, compute summary statistics of updated PRIME model (scenario s5). 
+
 Folders:
 - output
     Output files of disease burden estimates for different scenarios.

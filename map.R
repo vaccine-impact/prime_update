@@ -10,20 +10,23 @@ library (rgeos)
 library (data.table)
 library (ggforce)
 library (ggpubr)
+library (stats)
+
+rm (list = ls ())
 
 
-create_map <- function () {
+create_map <- function (vaccine_impact) {
   
   # map tutorial
   # https://www.r-spatial.org/r/2018/10/25/ggplot2-sf.html
   world <- ne_countries (scale = "medium", returnclass = "sf")
+  setDT (world)
   
   # ------------------------------------------------------------------------------
   theme_set(theme_bw())
   
-  d <- fread (file = "results/Table-Vaccine_impact_s5_iso3.csv")
-  setDT (world)
-  dt <- world [d, on = .(iso_a3 = country)]
+  # combine tables to add geometry
+  dt <- world [vaccine_impact, on = .(iso_a3 = country)]
   
   # map of cases averted per 1000 vaccinated girls
   cases_a <- ggplot(data = dt) +
@@ -85,21 +88,57 @@ create_map <- function () {
   # in a single page
   
   plot_list <- list (cases_a, deaths_a, dalys_a)
-  
   q <- ggarrange (plotlist=plot_list, ncol = 1, nrow = 3)
   
-  tiff ("figures/Figure-Burden_averted_per1000FVG.png",
+  tiff ("figures/Figure-Burden_averted_per1000FVG_cases_deaths_dalys.png",
         units="in", width=6, height=7.5, res=900)
   
   print (q)
+  dev.off ()
   
+  # arrange plots of (YLDs, YLLs, DALYs) averted per 1000 vaccinated girls
+  # in a single page
+  
+  plot_list <- list (ylds_a, ylls_a, dalys_a)
+  q <- ggarrange (plotlist=plot_list, ncol = 1, nrow = 3)
+  
+  tiff ("figures/Figure-Burden_averted_per1000FVG_ylds_ylls_dalys.png",
+        units="in", width=6, height=7.5, res=900)
+  
+  print (q)
   dev.off ()
   
   return ()
 }
 
+
+# generate summary statistics
+compute_summary_stats <- function (vaccine_impact) {
+  
+  burden_averted <- colnames (vaccine_impact)[3:7]
+  
+  for (i in 1:5) {
+    
+    # print summary statistics
+    print (burden_averted[i])
+    print (summary (vaccine_impact [, get(burden_averted [i])]))
+    print (quantile (vaccine_impact [, get(burden_averted [i])], c(0.025, 0.975)))
+    
+  }
+}
+
+
 #-------------------------------------------------------------------------------
-create_map ()
+# read vaccine impact table for updated PRIME
+vaccine_impact <- fread (file = "results/Table-Vaccine_impact_s5_iso3.csv")
+
+# create map
+create_map (vaccine_impact)
+
+# generate summary statistics
+compute_summary_stats (vaccine_impact)
+
+
 
 
 
