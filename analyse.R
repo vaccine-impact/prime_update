@@ -137,8 +137,8 @@ plot_cecx_burden_pre_post_vaccination <- function (allburden)
   
   y_axis <- c("Cases", "Deaths", "YLDs", "YLLs", "DALYs")
   
-  counter <- 0
-  # counter <- 174
+  # counter <- 0
+  counter <- 174
   
   # loop through each country
   for (countries in unique (allburden$country)) {
@@ -480,6 +480,245 @@ compute_vaccine_impact <- function (allburden) {
 # ------------------------------------------------------------------------------
 
 
+
+# ------------------------------------------------------------------------------
+# compute vaccine impact and comparison metrics -- regional level
+compute_vaccine_impact_regional <- function (allburden) {
+  
+  # burden summary
+  burden_summary <- allburden [ , .(total_cases  = sum (cases),
+                                    total_deaths = sum (deaths),
+                                    total_yld    = sum (yld),
+                                    total_yll    = sum (yll),
+                                    total_dalys  = sum (dalys)),
+                                # total_cohort_size = sum (cohort_size)),
+                                by=.(simulation, scenario, who_region)]
+  
+  # sort by who_region and simulation scenario
+  burden_summary  <- burden_summary  [order (who_region, simulation)]
+  
+  # set who_region column as first column
+  setcolorder (burden_summary,  "who_region")
+  
+  # cohort size of 9 year old girls
+  burden_9 <- allburden [age == 9, .(total_cohort_size_9 = sum (cohort_size), 
+                                     total_vaccines      = sum (vaccines)), 
+                         by=.(simulation, scenario, who_region)]
+  
+  # combine burden summary tables
+  burden_summary <- 
+    burden_summary [burden_9, on = .(simulation=simulation, scenario=scenario, who_region=who_region)]
+  
+  # sort by who_region and simulation scenario
+  burden_summary  <- burden_summary  [order (who_region, simulation)]
+  
+  # compute metrics per 100,000 9-year old girls
+  burden_summary [, `:=` (cases_p100  = total_cases  / total_cohort_size_9 * 100000,
+                          deaths_p100 = total_deaths / total_cohort_size_9 * 100000,
+                          yld_p100    = total_yld    / total_cohort_size_9 * 100000,
+                          yll_p100    = total_yll    / total_cohort_size_9 * 100000,
+                          dalys_p100  = total_dalys  / total_cohort_size_9 * 100000)]
+  
+  # compute vaccine impact table
+  burden_summary_prevac  <- burden_summary [scenario == "pre-vaccination"]
+  burden_summary_postvac <- burden_summary [scenario == "post-vaccination"]
+  
+  vaccine_impact <- burden_summary_prevac [burden_summary_postvac, 
+                                           on = .(simulation = simulation, who_region=who_region)]
+  
+  # compute vaccine impact -- burden averted
+  vaccine_impact [, `:=` (cases_averted  = total_cases  - i.total_cases,
+                          deaths_averted = total_deaths - i.total_deaths,
+                          yld_averted    = total_yld    - i.total_yld,
+                          yll_averted    = total_yll    - i.total_yll,
+                          dalys_averted  = total_dalys  - i.total_dalys)]
+  
+  
+  vaccine_impact [, `:=` (cases_averted_perVG  = cases_averted  / i.total_vaccines * 1000, 
+                          deaths_averted_perVG = deaths_averted / i.total_vaccines * 1000,
+                          yld_averted_perVG    = yld_averted    / i.total_vaccines * 1000,
+                          yll_averted_perVG    = yll_averted    / i.total_vaccines * 1000,
+                          dalys_averted_perVG  = dalys_averted  / i.total_vaccines * 1000)]
+  
+  # total <- c("cases_averted_perVG", 
+  #            "deaths_averted_perVG", 
+  #            "yld_averted_perVG", 
+  #            "yll_averted_perVG", 
+  #            "dalys_averted_perVG")
+  # 
+  # for (i in total) {
+  #   denominator <- vaccine_impact [simulation=="s1", .(get(i))]
+  #   vaccine_impact [, paste0(i, "_p") := get(i) / denominator [, V1]]
+  # }
+  # 
+  # plot vaccine impact
+  # plot lifetime health impact per 1000 vaccinated girls
+  
+  # plot file
+  pdf ("results/Figure-WHOregion_vaccine_impact.pdf")  
+  
+  counter <- 0
+  
+  # loop through each country
+  for (regions in unique (vaccine_impact$who_region)) {
+    
+    if (counter <6) {  # plot subset of regions
+      counter <- counter + 1
+      
+      tic ()
+      print (regions)
+      region_vaccine_impact <- vaccine_impact [who_region == regions]
+      
+      plotwhat <- c("cases_averted_perVG", 
+                    "deaths_averted_perVG",
+                    "yld_averted_perVG",
+                    "yll_averted_perVG", 
+                    "dalys_averted_perVG")
+      
+      y_axis <- c("Cases averted", 
+                  "Deaths averted",
+                  "YLDs averted",
+                  "YLLs averted", 
+                  "DALYs averted")
+      
+      plot_list = list ()
+      
+      plot_list <- lapply (1:length(plotwhat), function (i) {
+        
+        toplot = plotwhat[i]
+        
+        p <- ggplot (region_vaccine_impact, 
+                     aes (x = simulation, y = get(toplot), fill=toplot)) + 
+          geom_bar (stat="identity") + 
+          labs (
+            x = "Scenario",
+            y = y_axis[i]
+          ) + 
+          theme_bw (base_size = 10) +
+          theme(legend.position="none") + 
+          theme (panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
+          scale_y_continuous (labels = scales::comma)
+      })
+      
+      # arrange plot columns and rows
+      q <- ggarrange(plotlist=plot_list, ncol = 2, nrow = 3)
+      
+      print (annotate_figure(q, 
+                             top = text_grob (paste0("Lifetime health impact per 1000 vaccinated girls - ", 
+                                                     regions), 
+                                                     # countrycode (countries, 'iso3c', 'country.name')), 
+                                              color = "black", size = 12)))
+      
+    }
+    toc ()
+    
+  }  # end of for loop
+  
+  dev.off ()
+  
+  # # compute proportions (total: cases, deaths, yld, yll, dalys) with respect to simulation s1
+  # total <- c("total_cases", "total_deaths", "total_yld", "total_yll", "total_dalys",
+  #            "cases_p100", "deaths_p100", "yld_p100", "yll_p100", "dalys_p100")
+  # for (i in total) {
+  #   
+  #   denominator <- burden_summary [simulation=="s1", .(scenario, get(i) )]
+  #   
+  #   burden_summary [scenario=="pre-vaccination",
+  #                   paste0(i, "_p") := get(i) / denominator [scenario=="pre-vaccination", V2]]
+  #   burden_summary [scenario=="post-vaccination",
+  #                   paste0(i, "_p") := get(i) / denominator [scenario=="post-vaccination", V2]]
+  # }
+  
+  
+  # save streamlined table of vaccine impact
+  # who_region, simulation, (cases, deaths, ylds, ylls, dalys) averted per 1000 FVG
+  vaccine_impact_table <- vaccine_impact [, c("who_region", "simulation", 
+                                              "cases_averted_perVG", 
+                                              "deaths_averted_perVG", 
+                                              "yld_averted_perVG", 
+                                              "yll_averted_perVG", 
+                                              "dalys_averted_perVG")]
+  
+  # save a copy -- vaccine impact data table of only updated simulation scenario
+  fwrite (vaccine_impact_table [simulation == "s5"], 
+          "results/Table-Vaccine_impact_s5_region.csv",
+          col.names = T, row.names = F)
+  
+  # # add country name from iso3 country code
+  # vaccine_impact_table [, Country := countrycode (vaccine_impact_table  [, country], 
+  #                                                 origin = "iso3c", 
+  #                                                 destination = "country.name")]
+  # 
+  # # drop column iso3 country code 
+  # vaccine_impact_table  [, country := NULL]
+  
+  # set who_region column as first column
+  setcolorder (vaccine_impact_table,  "who_region")
+  
+  # sort by who_region
+  vaccine_impact_table  <- vaccine_impact_table  [order (who_region)]
+  
+  # round off values (2 decimal points)
+  vaccine_impact_table <- vaccine_impact_table [, lapply(.SD, round, 2),
+                                                .SDcols = c("cases_averted_perVG", 
+                                                            "deaths_averted_perVG", 
+                                                            "yld_averted_perVG", 
+                                                            "yll_averted_perVG", 
+                                                            "dalys_averted_perVG"),
+                                                by = .(who_region, simulation)]
+  
+  # update column names for burden averted
+  setnames (vaccine_impact_table, 
+            old = c("simulation", 
+                    "cases_averted_perVG", 
+                    "deaths_averted_perVG", 
+                    "yld_averted_perVG", 
+                    "yll_averted_perVG", 
+                    "dalys_averted_perVG"), 
+            new = c("Scenario", 
+                    "Cases averted per 1000 vaccinated girls", 
+                    "Deaths averted per 1000 vaccinated girls", 
+                    "YLDs averted per 1000 vaccinated girls", 
+                    "YLLs averted per 1000 vaccinated girls", 
+                    "DALYs averted per 1000 vaccinated girls"))
+  
+  
+  # save vaccine impact data table
+  fwrite (vaccine_impact_table, 
+          "results/Table-Vaccine_impact_region.csv",
+          col.names = T, row.names = F)
+  
+  # save save vaccine impact data table of only updated simulation scenario
+  vaccine_impact_table_s5 <- vaccine_impact_table [Scenario == "s5"]
+  
+  # drop Scenario column
+  vaccine_impact_table_s5 [, Scenario := NULL]
+  
+  # round off values (no decimal point)
+  vaccine_impact_table_s5 <- 
+    vaccine_impact_table_s5 [, lapply(.SD, round, 0),
+                             .SDcols = c(
+                               "Cases averted per 1000 vaccinated girls", 
+                               "Deaths averted per 1000 vaccinated girls", 
+                               "YLDs averted per 1000 vaccinated girls", 
+                               "YLLs averted per 1000 vaccinated girls", 
+                               "DALYs averted per 1000 vaccinated girls"),
+                             by = .(who_region)]
+  
+  # save save vaccine impact data table of only updated simulation scenario
+  fwrite (vaccine_impact_table_s5, 
+          "results/Table-Vaccine_impact_region_PRIME_update.csv",
+          col.names = T, row.names = F)
+  
+  
+  return ()
+  
+} # end of function -- compute_vaccine_impact_regional
+# ------------------------------------------------------------------------------
+
+
+
+
 # ------------------------------------------------------------------------------
 # compute vaccine impact and comparison metrics -- country level
 compute_vaccine_impact_country <- function (allburden) {
@@ -556,8 +795,8 @@ compute_vaccine_impact_country <- function (allburden) {
   # plot file
   pdf ("results/Figure-Country_vaccine_impact.pdf")  
   
-  counter <- 0
-  # counter <- 174
+  # counter <- 0
+  counter <- 174
   
   # loop through each country
   for (countries in unique (vaccine_impact$country)) {
@@ -639,6 +878,7 @@ compute_vaccine_impact_country <- function (allburden) {
                                               "dalys_averted_perVG")]
   
   # save a copy -- vaccine impact data table of only updated simulation scenario
+  vaccine_impact_table <- add_WHO_region (vaccine_impact_table)
   fwrite (vaccine_impact_table [simulation == "s5"], 
           "results/Table-Vaccine_impact_s5_iso3.csv",
           col.names = T, row.names = F)
@@ -647,9 +887,6 @@ compute_vaccine_impact_country <- function (allburden) {
   vaccine_impact_table [, Country := countrycode (vaccine_impact_table  [, country], 
                                                   origin = "iso3c", 
                                                   destination = "country.name")]
-  
-  # drop column iso3 country code 
-  vaccine_impact_table  [, country := NULL]
   
   # set Country column as first column
   setcolorder (vaccine_impact_table,  "Country")
@@ -664,7 +901,7 @@ compute_vaccine_impact_country <- function (allburden) {
                                   "yld_averted_perVG", 
                                   "yll_averted_perVG", 
                                   "dalys_averted_perVG"),
-                      by = .(Country, simulation)]
+                      by = .(Country, country, simulation)]
   
   # update column names for burden averted
   setnames (vaccine_impact_table, 
@@ -681,7 +918,10 @@ compute_vaccine_impact_country <- function (allburden) {
                     "YLLs averted per 1000 vaccinated girls", 
                     "DALYs averted per 1000 vaccinated girls"))
   
-  
+
+  # add column -- who_region
+  vaccine_impact_table <- add_WHO_region (vaccine_impact_table)
+    
   # save vaccine impact data table
   fwrite (vaccine_impact_table, 
           "results/Table-Vaccine_impact.csv",
@@ -740,6 +980,9 @@ create_table_country_burden (allburden)
 
 # compute vaccine impact -- global level
 compute_vaccine_impact (allburden)
+
+# compute vaccine impact -- regional level
+compute_vaccine_impact_regional (allburden)
 
 # compute vaccine impact -- country level
 compute_vaccine_impact_country (allburden)
