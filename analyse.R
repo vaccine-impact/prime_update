@@ -27,6 +27,7 @@ program_start_analyse <- function ()
   library (ggforce)
   library (ggpubr)
   library (rworldmap)
+  library (prime)
   
 } # end of function -- program_start_analyse
 # ------------------------------------------------------------------------------
@@ -95,6 +96,29 @@ combine_burden_estimate <- function () {
 # ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
+# Add WHO burden region (column) 
+add_WHO_region <- function (allburden) {
+
+  # extract columns of iso3 country codes and WHO regions
+  iso3_who <- prime::data.global [, .(iso3, `WHO Region`)]
+  
+  # add who region column
+  allburden <- iso3_who [allburden, on = .(iso3 = country)]
+  
+  # rename column name -- who_region
+  colnames(allburden) [colnames(allburden) == "WHO Region"] <- "who_region"
+  
+  # set WHO region for Palestine
+  allburden [iso3 == "PSE", who_region := "EMR"]
+  
+  # rename column name -- iso3 to country
+  colnames(allburden) [colnames(allburden) == "iso3"] <- "country"
+
+  return (allburden)
+  
+} # end of function -- add_WHO_region
+
+# ------------------------------------------------------------------------------
 # plot cervical cancer burden (cases, deaths, yld, yll, dalys) pre- and post-vaccination
 # plot for each country and at global level
 plot_cecx_burden_pre_post_vaccination <- function (allburden)
@@ -113,7 +137,8 @@ plot_cecx_burden_pre_post_vaccination <- function (allburden)
   
   y_axis <- c("Cases", "Deaths", "YLDs", "YLLs", "DALYs")
   
-  counter <- 0
+  # counter <- 0
+  counter <- 174
   
   # loop through each country
   for (countries in unique (allburden$country)) {
@@ -141,7 +166,9 @@ plot_cecx_burden_pre_post_vaccination <- function (allburden)
                    x="Year of birth",
                    y=y_axis[i],
                    title = countrycode (countries, 'iso3c', 'country.name')) +
-                 scale_x_continuous(breaks=seq(2011, 2020, 3))
+                 scale_x_continuous(breaks=seq(2011, 2020, 3)) + 
+                 theme (panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
+                 scale_y_continuous (labels = scales::comma)
         )
       }
       
@@ -184,7 +211,9 @@ plot_cecx_burden_pre_post_vaccination <- function (allburden)
              labs (
                x="Year of birth",
                y=y_axis[i]) + 
-             scale_x_continuous(breaks=seq(2011, 2020, 3))
+             scale_x_continuous(breaks=seq(2011, 2020, 3)) + 
+             theme (panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
+             scale_y_continuous (labels = scales::comma)
     )
   }
   
@@ -199,7 +228,7 @@ plot_cecx_burden_pre_post_vaccination <- function (allburden)
   for (j in 1:2) {
     
     # figure files
-    tiff (paste0 ("figures/fig", j, ".png", sep=""), 
+    png (paste0 ("figures/fig", j, ".png", sep=""), 
           units="in", width=6, height=9, res=900)
     
     plot_title <- c ("Lifetime burden of cervical cancer (cases, deaths) caused by HPV 16/18 pre- and post-vaccination", 
@@ -228,7 +257,9 @@ plot_cecx_burden_pre_post_vaccination <- function (allburden)
           y=y_axis[i]) + 
         scale_x_continuous(breaks=seq(2011, 2020, 3)) + 
         # theme_minimal () + 
-        theme (axis.text.x = element_text(size=6))
+        theme (axis.text.x = element_text(size=6)) + 
+        theme (panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
+        scale_y_continuous (labels = scales::comma)
     })
     
     # arrange plots in a single page
@@ -388,7 +419,7 @@ compute_vaccine_impact <- function (allburden) {
   
   # plot file
   # pdf ("figures/plots-impact.pdf")  
-  tiff ("figures/Figure-Global_vaccine_impact.png", 
+  png ("figures/Figure-Global_vaccine_impact.png", 
         units="in", width=6, height=9, res=900)
   
   plotwhat <- c("cases_averted_perVG", 
@@ -418,7 +449,9 @@ compute_vaccine_impact <- function (allburden) {
       ) + 
       theme_bw (base_size = 10) +
       # theme_minimal() + 
-      theme(legend.position="none") 
+      theme(legend.position="none") + 
+      theme (panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
+      scale_y_continuous (labels = scales::comma)
   })
   
   # arrange plot columns and rows
@@ -523,7 +556,8 @@ compute_vaccine_impact_country <- function (allburden) {
   # plot file
   pdf ("results/Figure-Country_vaccine_impact.pdf")  
   
-  counter <- 0
+  # counter <- 0
+  counter <- 174
   
   # loop through each country
   for (countries in unique (vaccine_impact$country)) {
@@ -561,7 +595,9 @@ compute_vaccine_impact_country <- function (allburden) {
         y = y_axis[i]
       ) + 
       theme_bw (base_size = 10) +
-      theme(legend.position="none") 
+      theme(legend.position="none") + 
+      theme (panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
+      scale_y_continuous (labels = scales::comma)
   })
   
   # arrange plot columns and rows
@@ -691,6 +727,9 @@ program_start_analyse ()  # load libraries, etc
 
 # Combine burden estimates from different simulation scenarios 
 allburden <- combine_burden_estimate ()
+
+# Add WHO burden region (column) 
+allburden <- add_WHO_region (allburden)
 
 # plot cervical cancer burden (cases, deaths, yld, yll, dalys) pre- and post-vaccination
 # plot for each country and at global level

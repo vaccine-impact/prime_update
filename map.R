@@ -31,55 +31,60 @@ create_map <- function (vaccine_impact) {
   # map of cases averted per 1000 vaccinated girls
   cases_a <- ggplot(data = dt) +
     geom_sf (aes(fill = cases_averted_perVG, geometry = geometry)) + 
-    scale_fill_viridis_c(option = "C") + 
+    scale_fill_viridis_c(option = "plasma", direction = -1) +
     ggtitle ("Cases averted per 1000 vaccinated girls") + 
     theme(legend.title = element_blank()) + 
     theme(axis.text.x = element_blank(), axis.ticks = element_blank()) + 
-    theme(axis.text.y = element_blank(), axis.ticks = element_blank())
+    theme(axis.text.y = element_blank(), axis.ticks = element_blank()) + 
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
   
   ggsave ("maps/cases_averted_per1000FVG.png", width = 6, height = 6, dpi = "screen")
-  
+
   # map of deaths averted per 1000 vaccinated girls
   deaths_a <- ggplot(data = dt) +
     geom_sf (aes(fill = deaths_averted_perVG, geometry = geometry)) + 
-    scale_fill_viridis_c(option = "C") + 
+    scale_fill_viridis_c(option = "plasma", direction = -1) +
     ggtitle ("Deaths averted per 1000 vaccinated girls") + 
     theme(legend.title = element_blank()) + 
     theme(axis.text.x = element_blank(), axis.ticks = element_blank()) + 
-    theme(axis.text.y = element_blank(), axis.ticks = element_blank())
+    theme(axis.text.y = element_blank(), axis.ticks = element_blank()) + 
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
   
   ggsave ("maps/deaths_averted_per1000FVG.png", width = 6, height = 6, dpi = "screen")
   
   # map of YLDs averted per 1000 vaccinated girls
   ylds_a <- ggplot(data = dt) +
     geom_sf (aes(fill = yld_averted_perVG, geometry = geometry)) + 
-    scale_fill_viridis_c(option = "C") + 
+    scale_fill_viridis_c(option = "plasma", direction = -1) + 
     ggtitle ("YLDs averted per 1000 vaccinated girls") + 
     theme(legend.title = element_blank()) + 
     theme(axis.text.x = element_blank(), axis.ticks = element_blank()) + 
-    theme(axis.text.y = element_blank(), axis.ticks = element_blank())
+    theme(axis.text.y = element_blank(), axis.ticks = element_blank()) + 
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
   
   ggsave ("maps/ylds_averted_per1000FVG.png", width = 6, height = 6, dpi = "screen")
   
   # map of YLLs averted per 1000 vaccinated girls
   ylls_a <- ggplot(data = dt) +
     geom_sf (aes(fill = yll_averted_perVG, geometry = geometry)) + 
-    scale_fill_viridis_c(option = "C") + 
+    scale_fill_viridis_c(option = "plasma", direction = -1) + 
     ggtitle ("YLLs averted per 1000 vaccinated girls") + 
     theme(legend.title = element_blank()) + 
     theme(axis.text.x = element_blank(), axis.ticks = element_blank()) + 
-    theme(axis.text.y = element_blank(), axis.ticks = element_blank())
+    theme(axis.text.y = element_blank(), axis.ticks = element_blank()) + 
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
   
   ggsave ("maps/ylls_averted_per1000FVG.png", width = 6, height = 6, dpi = "screen")
   
   # map of DALYs averted per 1000 vaccinated girls
   dalys_a <- ggplot(data = dt) +
     geom_sf (aes(fill = dalys_averted_perVG, geometry = geometry)) + 
-    scale_fill_viridis_c(option = "C") + 
+    scale_fill_viridis_c(option = "plasma", direction = -1) + 
     ggtitle ("DALYs averted per 1000 vaccinated girls") + 
     theme(legend.title = element_blank()) + 
     theme(axis.text.x = element_blank(), axis.ticks = element_blank()) + 
-    theme(axis.text.y = element_blank(), axis.ticks = element_blank())
+    theme(axis.text.y = element_blank(), axis.ticks = element_blank()) + 
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
   
   ggsave ("maps/dalys_averted_per1000FVG.png", width = 6, height = 6, dpi = "screen")
   
@@ -90,7 +95,7 @@ create_map <- function (vaccine_impact) {
   plot_list <- list (cases_a, deaths_a, dalys_a)
   q <- ggarrange (plotlist=plot_list, ncol = 1, nrow = 3)
   
-  tiff ("figures/Figure-Burden_averted_per1000FVG_cases_deaths_dalys.png",
+  png ("figures/Figure-Burden_averted_per1000FVG_cases_deaths_dalys.png",
         units="in", width=6, height=7.5, res=900)
   
   print (q)
@@ -102,7 +107,7 @@ create_map <- function (vaccine_impact) {
   plot_list <- list (ylds_a, ylls_a, dalys_a)
   q <- ggarrange (plotlist=plot_list, ncol = 1, nrow = 3)
   
-  tiff ("figures/Figure-Burden_averted_per1000FVG_ylds_ylls_dalys.png",
+  png ("figures/Figure-Burden_averted_per1000FVG_ylds_ylls_dalys.png",
         units="in", width=6, height=7.5, res=900)
   
   print (q)
