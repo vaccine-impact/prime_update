@@ -120,15 +120,15 @@ add_WHO_region <- function (allburden) {
 
 # ------------------------------------------------------------------------------
 # plot cervical cancer burden (cases, deaths, yld, yll, dalys) pre- and post-vaccination
-# plot for each country and at global level
+# plot for each country, each region and at global level
 plot_cecx_burden_pre_post_vaccination <- function (allburden)
 {
-  
   # ----------------------------------------------------------------------------
   # burden comparison plot for each country
+  # ----------------------------------------------------------------------------
   
   # plot file
-  pdf ("results/Figure-Country_burden_pre_post_vaccination.pdf")
+  pdf ("appendix/Figure-Country_burden_pre_post_vaccination.pdf")
   
   # what burden to plot
   plotwhat = c("cases", "deaths", "yld", "yll", "dalys")
@@ -179,26 +179,77 @@ plot_cecx_burden_pre_post_vaccination <- function (allburden)
   dev.off ()  # close plot file
   
   
+  # ----------------------------------------------------------------------------
+  # burden comparison plot for each region
+  # ----------------------------------------------------------------------------
+  
+  # plot file
+  pdf ("appendix/Figure-WHOregion_burden_pre_post_vaccination.pdf")
+  
+  who_regions <- data.table (who_region_code = c("AFR", "AMR", "EMR", "EUR", "SEAR", "WPR"), 
+                             who_region_name = c("African Region", 
+                                                 "Region of the Americas", 
+                                                 "Eastern Mediterranean Region", 
+                                                 "European Region", 
+                                                 "South-East Asia Region", 
+                                                 "Western Pacific Region"))
+  setkey (who_regions, who_region_code)
+  
+  # loop through each region
+  for (region in unique (allburden$who_region)) {
+    
+    tic ()
+    print (region)
+    region_burden <- allburden [who_region == region]
+    
+    # apply sum function to burden columns
+    # dt[, lapply(.SD, sum, na.rm=TRUE), by=category ]
+    region_burden <- region_burden [, lapply (.SD, sum), 
+                                .SDcols = c ("cases", "deaths", "yld", "yll", "dalys"), 
+                                by=.(age, scenario, type, simulation, birthcohort)]
+    
+    # loop through each burden metric
+    for (i in 1:length (plotwhat)) {
+      
+      # burden metric
+      toplot = plotwhat[i]
+      
+      print (ggplot (region_burden, 
+                     aes (x = birthcohort, y = get(toplot), fill=age)) +
+               geom_bar (stat="identity") + 
+               scale_fill_gradientn (colours = rev(rainbow(5))) + 
+               facet_grid (scenario ~ simulation) +
+               theme_bw (base_size = 8) +
+               labs (
+                 x="Year of birth",
+                 y=y_axis[i],
+                 title = who_regions [who_region_code == region, who_region_name]) +
+               scale_x_continuous(breaks=seq(2011, 2020, 3)) + 
+               theme (panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
+               scale_y_continuous (labels = scales::comma)
+      )
+    }
+    
+    toc ()
+  }
+  
+  dev.off ()  # close plot file
+  
+  
+  # ----------------------------------------------------------------------------
   # burden comparison plot at the global level
+  # ----------------------------------------------------------------------------
+  
   # plot file 
   pdf ("results/Figure-Global_burden_pre_post_vaccination.pdf")
   
-  # copy all burden data table
-  gburden <- copy (allburden)
-  
-  # set country column to NULL (drop country column)
-  gburden [, country := NULL]
-  
   # apply sum function to burden columns
-  global_burden <- gburden [, lapply (.SD, sum), 
+  # dt[, lapply(.SD, sum, na.rm=TRUE), by=category ]
+  global_burden <- allburden [, lapply (.SD, sum), 
                 .SDcols = c ("cases", "deaths", "yld", "yll", "dalys"), 
                 by=.(age, scenario, type, simulation, birthcohort)]
   
-  # global_burden <- gburden [, lapply (.SD, sum), by=.(age, scenario, type, simulation, birthcohort)]
-  # dt[, lapply(.SD, sum, na.rm=TRUE), by=category ]
-  
-
-
+  # loop through each burden metric
   for (i in 1:length (plotwhat)) {
     toplot = plotwhat[i]
     
@@ -280,6 +331,7 @@ plot_cecx_burden_pre_post_vaccination <- function (allburden)
 } # end of function -- plot_cecx_burden_pre_post_vaccination
 # ------------------------------------------------------------------------------
 
+
 # ------------------------------------------------------------------------------
 # create table of country-specific cervical cancer burden
 create_table_country_burden <- function (allburden) {
@@ -306,30 +358,30 @@ create_table_country_burden <- function (allburden) {
                       .SDcols = burden_columns, 
                       by = .(country, simulation) ]
   
-  # round off burden values (no decimal point)
-  pre_vac <- pre_vac [, lapply(.SD, round, 0),
-                      .SDcols = burden_columns,
-                      by = .(country, simulation)]
-
-  post_vac <- post_vac [, lapply(.SD, round, 0),
-                      .SDcols = burden_columns,
-                      by = .(country, simulation)]
+  # # round off burden values (no decimal point)
+  # pre_vac <- pre_vac [, lapply(.SD, round, 0),
+  #                     .SDcols = burden_columns,
+  #                     by = .(country, simulation)]
+  # 
+  # post_vac <- post_vac [, lapply(.SD, round, 0),
+  #                     .SDcols = burden_columns,
+  #                     by = .(country, simulation)]
   
   # sort by country and simulation scenario
   pre_vac  <- pre_vac  [order (country, simulation)]
   post_vac <- post_vac [order (country, simulation)]
   
-  # add country name from iso3 country code
-  pre_vac  [, Country := countrycode (pre_vac  [, country], origin = "iso3c", destination = "country.name")]
-  post_vac [, Country := countrycode (post_vac [, country], origin = "iso3c", destination = "country.name")]
+  # # add country name from iso3 country code
+  # pre_vac  [, Country := countrycode (pre_vac  [, country], origin = "iso3c", destination = "country.name")]
+  # post_vac [, Country := countrycode (post_vac [, country], origin = "iso3c", destination = "country.name")]
   
-  # drop column iso3 country code 
-  pre_vac  [, country := NULL]
-  post_vac [, country := NULL]
+  # # drop column iso3 country code 
+  # pre_vac  [, country := NULL]
+  # post_vac [, country := NULL]
   
-  # set Country column as first column
-  setcolorder (pre_vac,  "Country")
-  setcolorder (post_vac, "Country")
+  # # set Country column as first column
+  # setcolorder (pre_vac,  "Country")
+  # setcolorder (post_vac, "Country")
   
   # add pre-vaccination / post-vaccination to burden column names
   setnames (pre_vac, 
@@ -341,17 +393,32 @@ create_table_country_burden <- function (allburden) {
             new = c("Scenario", "Cases (post-vaccination)", "Deaths (post-vaccination)", "YLDs (post-vaccination)", "YLLs (post-vaccination)", "DALYs (post-vaccination)"))
   
   # combine tables -- pre-vaccination (and) post-vaccination
-  burden <- pre_vac [post_vac, on = .(Country = Country, Scenario = Scenario)]
+  burden <- pre_vac [post_vac, on = .(country = country, Scenario = Scenario)]
+  
+  # add country name from iso3 country code
+  burden  [, Country := countrycode (burden  [, country], origin = "iso3c", destination = "country.name")]
+  
+  # add column -- who_region
+  burden <- add_WHO_region (burden)
+  
+  # update column names
+  setnames (burden, 
+            old = c ("country",              "who_region"), 
+            new = c ("Country code (ISO 3)", "WHO region"))
+  
+  # set Country column as first column
+  setcolorder (burden,  "Country")
   
   # save burden data table
   fwrite (burden, 
-          "results/Table-Cervical_cancer_burden_HPV_16_18.csv",
+          "appendix/Table-Cervical_cancer_burden_HPV_16_18.csv",
           col.names = T, row.names = F)
   
   return ()  # return null
 
 } # end of function -- create_table_country_burden
 # ------------------------------------------------------------------------------
+
 
 # ------------------------------------------------------------------------------
 # compute vaccine impact and comparison metrics -- global level
@@ -554,8 +621,17 @@ compute_vaccine_impact_regional <- function (allburden) {
   # plot vaccine impact
   # plot lifetime health impact per 1000 vaccinated girls
   
+  who_regions <- data.table (who_region_code = c("AFR", "AMR", "EMR", "EUR", "SEAR", "WPR"), 
+                             who_region_name = c("African Region", 
+                                                 "Region of the Americas", 
+                                                 "Eastern Mediterranean Region", 
+                                                 "European Region", 
+                                                 "South-East Asia Region", 
+                                                 "Western Pacific Region"))
+  setkey (who_regions, who_region_code)
+  
   # plot file
-  pdf ("results/Figure-WHOregion_vaccine_impact.pdf")  
+  pdf ("appendix/Figure-WHOregion_vaccine_impact.pdf")  
   
   counter <- 0
   
@@ -605,7 +681,7 @@ compute_vaccine_impact_regional <- function (allburden) {
       
       print (annotate_figure(q, 
                              top = text_grob (paste0("Lifetime health impact per 1000 vaccinated girls - ", 
-                                                     regions), 
+                                                     who_regions [who_region_code == regions, who_region_name]), 
                                                      # countrycode (countries, 'iso3c', 'country.name')), 
                                               color = "black", size = 12)))
       
@@ -793,7 +869,7 @@ compute_vaccine_impact_country <- function (allburden) {
   # plot lifetime health impact per 1000 vaccinated girls
   
   # plot file
-  pdf ("results/Figure-Country_vaccine_impact.pdf")  
+  pdf ("appendix/Figure-Country_vaccine_impact.pdf")  
   
   # counter <- 0
   counter <- 174
@@ -894,37 +970,41 @@ compute_vaccine_impact_country <- function (allburden) {
   # sort by Country name
   vaccine_impact_table  <- vaccine_impact_table  [order (Country)]
   
-  # round off values (2 decimal points)
-  vaccine_impact_table <- vaccine_impact_table [, lapply(.SD, round, 2),
-                      .SDcols = c("cases_averted_perVG", 
-                                  "deaths_averted_perVG", 
-                                  "yld_averted_perVG", 
-                                  "yll_averted_perVG", 
-                                  "dalys_averted_perVG"),
-                      by = .(Country, country, simulation)]
+  # # round off values (2 decimal points)
+  # vaccine_impact_table <- vaccine_impact_table [, lapply(.SD, round, 2),
+  #                     .SDcols = c("cases_averted_perVG", 
+  #                                 "deaths_averted_perVG", 
+  #                                 "yld_averted_perVG", 
+  #                                 "yll_averted_perVG", 
+  #                                 "dalys_averted_perVG"),
+  #                     by = .(Country, country, simulation)]
+  
+
+  # add column -- who_region
+  # vaccine_impact_table <- add_WHO_region (vaccine_impact_table)
   
   # update column names for burden averted
   setnames (vaccine_impact_table, 
-            old = c("simulation", 
+            old = c("country",
+                    "who_region",
+                    "simulation", 
                     "cases_averted_perVG", 
                     "deaths_averted_perVG", 
                     "yld_averted_perVG", 
                     "yll_averted_perVG", 
                     "dalys_averted_perVG"), 
-            new = c("Scenario", 
+            new = c("Country code (ISO 3)", 
+                    "WHO region", 
+                    "Scenario", 
                     "Cases averted per 1000 vaccinated girls", 
                     "Deaths averted per 1000 vaccinated girls", 
                     "YLDs averted per 1000 vaccinated girls", 
                     "YLLs averted per 1000 vaccinated girls", 
                     "DALYs averted per 1000 vaccinated girls"))
-  
-
-  # add column -- who_region
-  vaccine_impact_table <- add_WHO_region (vaccine_impact_table)
     
   # save vaccine impact data table
   fwrite (vaccine_impact_table, 
-          "results/Table-Vaccine_impact.csv",
+          "appendix/Table-Vaccine_impact.csv",
           col.names = T, row.names = F)
   
   # save save vaccine impact data table of only updated simulation scenario
