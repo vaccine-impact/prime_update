@@ -525,7 +525,7 @@ compute_vaccine_impact <- function (allburden) {
   q <- ggarrange(plotlist=plot_list, ncol = 2, nrow = 3)
   
   print (annotate_figure(q, 
-                         top = text_grob("Lifetime health impact per 1000 vaccinated girls", color = "black", size = 12)))
+                         top = text_grob("Lifetime health impact per 1000 vaccinated girls (global level)", color = "black", size = 12)))
   
   dev.off ()
   
@@ -630,12 +630,13 @@ compute_vaccine_impact_regional <- function (allburden) {
                                                  "Western Pacific Region"))
   setkey (who_regions, who_region_code)
   
-  # plot file
+  # ----------------------------------------------------------------------------
+  # plot file -- cases, deaths, ylls, ylds & dalys for 5 scenarios in 6 WHO regions (6 pages)
   pdf ("appendix/Figure-WHOregion_vaccine_impact.pdf")  
   
   counter <- 0
   
-  # loop through each country
+  # loop through each region
   for (regions in unique (vaccine_impact$who_region)) {
     
     if (counter <6) {  # plot subset of regions
@@ -691,6 +692,77 @@ compute_vaccine_impact_regional <- function (allburden) {
   }  # end of for loop
   
   dev.off ()
+  # ----------------------------------------------------------------------------
+  
+  # ----------------------------------------------------------------------------
+  # plot file -- cases, deaths, & dalys for updated scenario (s5) in 6 WHO regions (1 page)
+  # pdf ("figures/Figure-WHOregion_updated_vaccine_impact.pdf")  
+  png ("figures/Figure-WHOregion_updated_vaccine_impact.png",  
+       units="in", width=6, height=3, res=900)
+  
+  who_regions <- data.table (who_region_code = c("AFR", "AMR", "EMR", "EUR", "SEAR", "WPR"), 
+                             who_region_name = c("African Region", 
+                                                 "Region of the Americas", 
+                                                 "Eastern Mediterranean Region", 
+                                                 "European Region", 
+                                                 "South-East Asia Region", 
+                                                 "Western Pacific Region"))
+    
+  # extract vaccine impact results for updated scenario (s5)
+  region_vaccine_impact <- vaccine_impact [simulation == "s5"]
+  
+  # combine burden summary tables
+  region_vaccine_impact <- 
+    who_regions [region_vaccine_impact, on = .(who_region_code=who_region)]
+  
+  # rename column name -- who_region
+  colnames(region_vaccine_impact) [colnames(region_vaccine_impact) == "who_region_code"] <- "who_region"
+  
+  
+  plotwhat <- c("cases_averted_perVG", 
+                "deaths_averted_perVG",
+                "dalys_averted_perVG")
+  
+  y_axis <- c("Cases averted", 
+              "Deaths averted",
+              "DALYs averted")
+  
+  plot_list = list ()
+  
+  plot_list <- lapply (1:length(plotwhat), function (i) {
+    
+    # which burden to plot
+    toplot = plotwhat[i]
+    
+    # sort by burden value
+    # region_vaccine_impact <- setorderv (region_vaccine_impact, cols = toplot, order = -1)
+    
+    p <- ggplot (region_vaccine_impact, 
+                 aes (x = reorder (who_region_name, - dalys_averted_perVG), y = get(toplot), fill=toplot)) + 
+      geom_bar (stat="identity") + 
+      labs (
+        # x = "WHO region",
+        x = "",
+        y = y_axis[i]
+      ) + 
+      theme_bw (base_size = 7) +
+      theme(legend.position="none") + 
+      theme (panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
+      scale_y_continuous (labels = scales::comma) + 
+      rotate_x_text(angle = 45)
+  })
+  
+  # arrange plot columns and rows
+  q <- ggarrange(plotlist=plot_list, ncol = 3, nrow = 1)
+  
+  print (annotate_figure(q, 
+                         top = text_grob ("Lifetime health impact per 1000 vaccinated girls (regional level)", 
+                                          # countrycode (countries, 'iso3c', 'country.name')), 
+                                          color = "black", size = 12)))
+
+  
+  dev.off () 
+  # ----------------------------------------------------------------------------
   
   # # compute proportions (total: cases, deaths, yld, yll, dalys) with respect to simulation s1
   # total <- c("total_cases", "total_deaths", "total_yld", "total_yll", "total_dalys",
@@ -868,7 +940,8 @@ compute_vaccine_impact_country <- function (allburden) {
   # plot vaccine impact
   # plot lifetime health impact per 1000 vaccinated girls
   
-  # plot file
+  # ----------------------------------------------------------------------------
+  # plot file -- cases, deaths, ylls, ylds & dalys for 5 scenarios in 177 countries (177 pages)
   pdf ("appendix/Figure-Country_vaccine_impact.pdf")  
   
   # counter <- 0
@@ -929,6 +1002,69 @@ compute_vaccine_impact_country <- function (allburden) {
   }  # end of for loop
   
   dev.off ()
+  # ----------------------------------------------------------------------------
+  
+  
+  # ----------------------------------------------------------------------------
+  # plot file -- cases, deaths & dalys for updated scenario (s5) in 177 countries (1 page)
+  pdf ("figures/Figure-Country_updated_vaccine_impact.pdf")  
+  # png ("figures/Figure-Country_updated_vaccine_impact.png",  
+  #      units="in", width=6, height=9, res=900)
+  
+  # extract vaccine impact results for updated scenario (s5)
+  country_vaccine_impact <- vaccine_impact [simulation == "s5"]
+  
+  # add country name from iso3 country code
+  country_vaccine_impact [, Country := countrycode (country_vaccine_impact  [, country], 
+                                                  origin = "iso3c", 
+                                                  destination = "country.name")]
+  
+  plotwhat <- c("cases_averted_perVG", 
+                "deaths_averted_perVG",
+                "yld_averted_perVG",
+                "yll_averted_perVG", 
+                "dalys_averted_perVG")
+  
+  y_axis <- c("Cases averted", 
+              "Deaths averted",
+              "YLDs averted",
+              "YLLs averted", 
+              "DALYs averted")
+  
+  plot_list = list ()
+  
+  plot_list <- lapply (1:length(plotwhat), function (i) {
+    
+    # which burden to plot
+    toplot = plotwhat[i]
+    
+    p <- ggplot (country_vaccine_impact, 
+                 aes (x = reorder (Country, - dalys_averted_perVG), y = get(toplot), fill=toplot)) + 
+      geom_bar (stat="identity") + 
+      ################################## CHECK
+      # scale_fill_gradient2(low="red", high="green", mid="yellow",midpoint=median(country_vaccine_impact$get(toplot))) +
+      ################################## CHECK
+      labs (
+        # x = "Country",
+        x = "",
+        y = y_axis[i]
+      ) + 
+      theme_bw (base_size = 4) +
+      theme(legend.position="none") + 
+      theme (panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
+      scale_y_continuous (labels = scales::comma) + 
+      rotate_x_text(angle = 90)
+  })
+  
+  # arrange plot columns and rows
+  q <- ggarrange(plotlist=plot_list, ncol = 1, nrow = 5)
+  
+  print (annotate_figure(q, 
+                         top = text_grob ("Lifetime health impact per 1000 vaccinated girls (country level)", 
+                                          color = "black", size = 12)))
+  dev.off ()
+  # ----------------------------------------------------------------------------
+  
   
   # # compute proportions (total: cases, deaths, yld, yll, dalys) with respect to simulation s1
   # total <- c("total_cases", "total_deaths", "total_yld", "total_yll", "total_dalys",
@@ -1042,6 +1178,7 @@ compute_vaccine_impact_country <- function (allburden) {
 
 ################################################################################
 #-------------------------------------------------------------------------------
+
 # start of program
 program_start_analyse ()  # load libraries, etc
 
