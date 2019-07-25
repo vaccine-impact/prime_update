@@ -123,6 +123,14 @@ create_map <- function (vaccine_impact, scenario) {
   q <- ggarrange (plotlist=plot_list, ncol = 1, nrow = 3, 
                   labels = paste0 ("(scenario ", scenario, ")"), hjust = -4)
   
+  # save a copy of s5 map (cases, deaths, dalys) without mentioning s5 in the map
+  if (scenario == "s5") {
+    s5_map <- ggarrange (plotlist=plot_list, ncol = 1, nrow = 3)
+    ggsave (filename = "figures/s5_Figure-Burden_averted_per1000FVG_cases_deaths_dalys.png", 
+            plot = s5_map, 
+            width = 6, height = 7.5, units="in", dpi = 300)
+  }
+  
   # png (paste0 ("maps/", scenario, "_Figure-Burden_averted_per1000FVG_cases_deaths_dalys.png"),
   #       units="in", width=6, height=7.5, res=900)
   

@@ -280,7 +280,7 @@ plot_cecx_burden_pre_post_vaccination <- function (allburden)
     
     # figure files
     png (paste0 ("figures/fig", j, ".png", sep=""), 
-          units="in", width=6, height=9, res=900)
+          units="in", width=6, height=9, res=300)
     
     plot_title <- c ("Lifetime burden of cervical cancer (cases, deaths) caused by HPV 16/18 pre- and post-vaccination", 
                      "Lifetime burden of cervical cancer (YLDs, YLLs, YLDs) caused by HPV 16/18 pre- and post-vaccination")
@@ -486,8 +486,8 @@ compute_vaccine_impact <- function (allburden) {
   
   # plot file
   # pdf ("figures/plots-impact.pdf")  
-  png ("figures/Figure-Global_vaccine_impact.png", 
-        units="in", width=6, height=9, res=900)
+  #   png ("figures/Figure-Global_vaccine_impact.png", 
+  #       units="in", width=6, height=9, res=900)
   
   plotwhat <- c("cases_averted_perVG", 
                 "deaths_averted_perVG",
@@ -508,7 +508,7 @@ compute_vaccine_impact <- function (allburden) {
     toplot = plotwhat[i]
     
     p <- ggplot (vaccine_impact, 
-                 aes (x = simulation, y = get(toplot), fill=toplot)) + 
+                 aes (x = simulation, y = get(toplot), fill= - get (toplot))) + 
       geom_bar (stat="identity") + 
       labs (
         x = "Scenario",
@@ -524,10 +524,18 @@ compute_vaccine_impact <- function (allburden) {
   # arrange plot columns and rows
   q <- ggarrange(plotlist=plot_list, ncol = 2, nrow = 3)
   
-  print (annotate_figure(q, 
-                         top = text_grob("Lifetime health impact per 1000 vaccinated girls (global level)", color = "black", size = 12)))
+  ggsave ("figures/Figure-Global_vaccine_impact.png", 
+          annotate_figure(q, top = text_grob("Lifetime health impact per 1000 vaccinated girls (global level)", color = "black", size = 12)),
+          width=5, height=7.5, dpi=300)
   
-  dev.off ()
+  
+  #   png ("figures/Figure-Global_vaccine_impact.png", 
+  #       units="in", width=6, height=9, res=900)
+  
+  # print (annotate_figure(q, 
+  #                        top = text_grob("Lifetime health impact per 1000 vaccinated girls (global level)", color = "black", size = 12)))
+  
+  # dev.off ()
   
   
   # compute proportions (total: cases, deaths, yld, yll, dalys) with respect to simulation s1
@@ -697,8 +705,8 @@ compute_vaccine_impact_regional <- function (allburden) {
   # ----------------------------------------------------------------------------
   # plot file -- cases, deaths, & dalys for updated scenario (s5) in 6 WHO regions (1 page)
   # pdf ("figures/Figure-WHOregion_updated_vaccine_impact.pdf")  
-  png ("figures/Figure-WHOregion_updated_vaccine_impact.png",  
-       units="in", width=6, height=3, res=900)
+  # png ("figures/Figure-WHOregion_updated_vaccine_impact.png",  
+  #      units="in", width=6, height=3, res=900)
   
   who_regions <- data.table (who_region_code = c("AFR", "AMR", "EMR", "EUR", "SEAR", "WPR"), 
                              who_region_name = c("African Region", 
@@ -738,14 +746,15 @@ compute_vaccine_impact_regional <- function (allburden) {
     # region_vaccine_impact <- setorderv (region_vaccine_impact, cols = toplot, order = -1)
     
     p <- ggplot (region_vaccine_impact, 
-                 aes (x = reorder (who_region_name, - dalys_averted_perVG), y = get(toplot), fill=toplot)) + 
+                 # aes (x = reorder (who_region_name, - dalys_averted_perVG), y = get(toplot), fill=toplot)) + 
+                 aes (x = reorder (who_region_name, - get(toplot)), y = get(toplot), fill= -get(toplot))) + 
       geom_bar (stat="identity") + 
       labs (
         # x = "WHO region",
         x = "",
         y = y_axis[i]
       ) + 
-      theme_bw (base_size = 7) +
+      theme_bw (base_size = 8) +
       theme(legend.position="none") + 
       theme (panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
       scale_y_continuous (labels = scales::comma) + 
@@ -755,13 +764,20 @@ compute_vaccine_impact_regional <- function (allburden) {
   # arrange plot columns and rows
   q <- ggarrange(plotlist=plot_list, ncol = 3, nrow = 1)
   
-  print (annotate_figure(q, 
-                         top = text_grob ("Lifetime health impact per 1000 vaccinated girls (regional level)", 
-                                          # countrycode (countries, 'iso3c', 'country.name')), 
-                                          color = "black", size = 12)))
+  # print (annotate_figure(q, 
+  #                        top = text_grob ("Lifetime health impact per 1000 vaccinated girls (regional level)", 
+  #                                         # countrycode (countries, 'iso3c', 'country.name')), 
+  #                                         color = "black", size = 12)))
+  
+  ggsave ("figures/Figure-WHOregion_updated_vaccine_impact.png", 
+          annotate_figure(q, 
+                          top = text_grob ("Lifetime health impact per 1000 vaccinated girls (regional level)", 
+                                           # countrycode (countries, 'iso3c', 'country.name')), 
+                                           color = "black", size = 12)),
+          units="in", width=6, height=3, dpi=300)
 
   
-  dev.off () 
+  # dev.off () 
   # ----------------------------------------------------------------------------
   
   # # compute proportions (total: cases, deaths, yld, yll, dalys) with respect to simulation s1
@@ -1007,7 +1023,7 @@ compute_vaccine_impact_country <- function (allburden) {
   
   # ----------------------------------------------------------------------------
   # plot file -- cases, deaths & dalys for updated scenario (s5) in 177 countries (1 page)
-  pdf ("figures/Figure-Country_updated_vaccine_impact.pdf")  
+  pdf ("appendix/Figure-Country_comparison_vaccine_impact.pdf")  
   # png ("figures/Figure-Country_updated_vaccine_impact.png",  
   #      units="in", width=6, height=9, res=900)
   
@@ -1038,30 +1054,48 @@ compute_vaccine_impact_country <- function (allburden) {
     # which burden to plot
     toplot = plotwhat[i]
     
-    p <- ggplot (country_vaccine_impact, 
-                 aes (x = reorder (Country, - dalys_averted_perVG), y = get(toplot), fill=toplot)) + 
+    # country_vaccine_impact <- copy (country_vaccine_impact [order (- get(toplot))])
+    # country_vaccine_impact <- copy (setorder (country_vaccine_impact, dalys_averted_perVG))
+    
+    # p <- ggplot (country_vaccine_impact, 
+    print (ggplot (country_vaccine_impact, 
+                 # aes (x = reorder (Country, - dalys_averted_perVG), y = get(toplot), fill=toplot)) + 
+                 aes (x = reorder (Country, get(toplot)), y = get(toplot), fill = get(toplot))) +
       geom_bar (stat="identity") + 
       ################################## CHECK
       # scale_fill_gradient2(low="red", high="green", mid="yellow",midpoint=median(country_vaccine_impact$get(toplot))) +
       ################################## CHECK
       labs (
         # x = "Country",
-        x = "",
-        y = y_axis[i]
-      ) + 
-      theme_bw (base_size = 4) +
+        x = NULL,
+        y = y_axis[i],
+        title = paste0 (y_axis[i], " per 1000 vaccinated girls")
+      ) +
+      # ggtitle (paste0 (y_axis[i], " per 1000 vaccinated girls")) + 
+      theme_bw (base_size = 8) +
       theme(legend.position="none") + 
       theme (panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
       scale_y_continuous (labels = scales::comma) + 
-      rotate_x_text(angle = 90)
+      # rotate_x_text(angle = 90) + 
+      #   rotate_y_text(angle = 90) +
+      # scale_color_gradient2(low = "red", mid = "yellow", high = "green", 
+      #                       midpoint = max(country_vaccine_impact[, get(toplot)])/2)
+      # scale_fill_gradient(low="blue", high="red")
+      # scale_color_gradient2(low = "red", mid = "yellow", high = "green", midpoint=0)
+      # scale_colour_gradient2 ()
+      scale_fill_gradientn(colours = rev(terrain.colors(10))) + 
+      coord_flip() + 
+        theme (axis.text.y=element_text(size=rel(0.5))) 
+      
+      )
   })
   
-  # arrange plot columns and rows
-  q <- ggarrange(plotlist=plot_list, ncol = 1, nrow = 5)
-  
-  print (annotate_figure(q, 
-                         top = text_grob ("Lifetime health impact per 1000 vaccinated girls (country level)", 
-                                          color = "black", size = 12)))
+  # # arrange plot columns and rows
+  # q <- ggarrange(plotlist=plot_list, ncol = 1, nrow = 5)
+  # 
+  # print (annotate_figure(q, 
+  #                        top = text_grob ("Lifetime health impact per 1000 vaccinated girls (country level)", 
+  #                                         color = "black", size = 12)))
   dev.off ()
   # ----------------------------------------------------------------------------
   
@@ -1166,6 +1200,7 @@ compute_vaccine_impact_country <- function (allburden) {
           col.names = T, row.names = F)
   
   
+  print ("end of function -- compute_vaccine_impact_country")
   return ()
   
 } # end of function -- compute_vaccine_impact_country
