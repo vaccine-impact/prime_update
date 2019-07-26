@@ -137,8 +137,8 @@ plot_cecx_burden_pre_post_vaccination <- function (allburden)
   
   y_axis <- c("Cases", "Deaths", "YLDs", "YLLs", "DALYs")
   
-  # counter <- 0
-  counter <- 174
+  counter <- 0
+  # counter <- 174
   
   # loop through each country
   for (countries in unique (allburden$country)) {
@@ -960,8 +960,8 @@ compute_vaccine_impact_country <- function (allburden) {
   # plot file -- cases, deaths, ylls, ylds & dalys for 5 scenarios in 177 countries (177 pages)
   pdf ("appendix/Figure-Country_vaccine_impact.pdf")  
   
-  # counter <- 0
-  counter <- 174
+  counter <- 0
+  # counter <- 174
   
   # loop through each country
   for (countries in unique (vaccine_impact$country)) {
