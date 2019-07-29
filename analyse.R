@@ -1153,6 +1153,43 @@ compute_vaccine_impact_country <- function (allburden) {
   # add column -- who_region
   # vaccine_impact_table <- add_WHO_region (vaccine_impact_table)
   
+  # ----------------------------------------------------------------------------
+  # Which countries change the most from the update --
+  # in terms of cases/deaths/dalys averted per 1000 vaccinated girls, 
+  # in % terms from the previous estimates
+  # --> ( (s5 - s1) / s1 ) * 100
+  
+  # vaccine impact data table of base simulation scenario (s1)
+  vaccine_impact_table_s1 <- vaccine_impact_table [simulation == "s1"]
+  
+  # vaccine impact data table of only updated simulation scenario (s5)
+  vaccine_impact_table_s5 <- vaccine_impact_table [simulation == "s5"]
+  
+  # merge tables to compare scenarios -- s1 and s5 
+  # dat3=merge(dat1,dat2,by="ID") merge two tables by ID field
+  vaccine_impact_s1_s5 <- merge (vaccine_impact_table_s1, 
+                                 vaccine_impact_table_s5, 
+                                 by="country")
+
+  # compute % change in burden averted between s1 and s5 scenarios
+  # --> ( (s5 - s1) / s1 ) * 100
+  vaccine_impact_s1_s5 [, cases_averted_ratio := ((cases_averted_perVG.y - 
+                                                     cases_averted_perVG.x) / 
+                                                    cases_averted_perVG.x) * 100]
+
+  vaccine_impact_s1_s5 [, deaths_averted_ratio := ((deaths_averted_perVG.y - 
+                                                      deaths_averted_perVG.x) / 
+                                                     deaths_averted_perVG.x) * 100]
+  
+  vaccine_impact_s1_s5 [, dalys_averted_ratio := ((dalys_averted_perVG.y - 
+                                                     dalys_averted_perVG.x) / 
+                                                    dalys_averted_perVG.x) * 100]
+  
+  
+                                                    
+  
+  # ----------------------------------------------------------------------------
+  
   # update column names for burden averted
   setnames (vaccine_impact_table, 
             old = c("country",
@@ -1177,8 +1214,6 @@ compute_vaccine_impact_country <- function (allburden) {
           "appendix/Table-Vaccine_impact.csv",
           col.names = T, row.names = F)
   
-  # save save vaccine impact data table of only updated simulation scenario
-  vaccine_impact_table_s5 <- vaccine_impact_table [Scenario == "s5"]
   
   # drop Scenario column
   vaccine_impact_table_s5 [, Scenario := NULL]
@@ -1238,6 +1273,7 @@ compute_vaccine_impact_regional (allburden)
 
 # compute vaccine impact -- country level
 compute_vaccine_impact_country (allburden)
+
 
 #-------------------------------------------------------------------------------
 print (Sys.time ())  
