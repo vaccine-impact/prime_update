@@ -27,6 +27,7 @@ program_start_analyse <- function ()
   library (ggforce)
   library (ggpubr)
   library (rworldmap)
+  library (scales)
   library (prime)
   
 } # end of function -- program_start_analyse
@@ -1153,42 +1154,9 @@ compute_vaccine_impact_country <- function (allburden) {
   # add column -- who_region
   # vaccine_impact_table <- add_WHO_region (vaccine_impact_table)
   
-  # ----------------------------------------------------------------------------
-  # Which countries change the most from the update --
-  # in terms of cases/deaths/dalys averted per 1000 vaccinated girls, 
-  # in % terms from the previous estimates
-  # --> ( (s5 - s1) / s1 ) * 100
-  
-  # vaccine impact data table of base simulation scenario (s1)
-  vaccine_impact_table_s1 <- vaccine_impact_table [simulation == "s1"]
-  
-  # vaccine impact data table of only updated simulation scenario (s5)
-  vaccine_impact_table_s5 <- vaccine_impact_table [simulation == "s5"]
-  
-  # merge tables to compare scenarios -- s1 and s5 
-  # dat3=merge(dat1,dat2,by="ID") merge two tables by ID field
-  vaccine_impact_s1_s5 <- merge (vaccine_impact_table_s1, 
-                                 vaccine_impact_table_s5, 
-                                 by="country")
 
-  # compute % change in burden averted between s1 and s5 scenarios
-  # --> ( (s5 - s1) / s1 ) * 100
-  vaccine_impact_s1_s5 [, cases_averted_ratio := ((cases_averted_perVG.y - 
-                                                     cases_averted_perVG.x) / 
-                                                    cases_averted_perVG.x) * 100]
-
-  vaccine_impact_s1_s5 [, deaths_averted_ratio := ((deaths_averted_perVG.y - 
-                                                      deaths_averted_perVG.x) / 
-                                                     deaths_averted_perVG.x) * 100]
-  
-  vaccine_impact_s1_s5 [, dalys_averted_ratio := ((dalys_averted_perVG.y - 
-                                                     dalys_averted_perVG.x) / 
-                                                    dalys_averted_perVG.x) * 100]
-  
-  
-                                                    
-  
-  # ----------------------------------------------------------------------------
+  # vaccine impact table (shorter column names)
+  vaccine_impact_tab <- copy (vaccine_impact_table)
   
   # update column names for burden averted
   setnames (vaccine_impact_table, 
@@ -1214,6 +1182,9 @@ compute_vaccine_impact_country <- function (allburden) {
           "appendix/Table-Vaccine_impact.csv",
           col.names = T, row.names = F)
   
+  # ----------------------------------------------------------------------------
+  # vaccine impact data table of only updated simulation scenario (s5)
+  vaccine_impact_table_s5 <- vaccine_impact_table [Scenario == "s5"]
   
   # drop Scenario column
   vaccine_impact_table_s5 [, Scenario := NULL]
@@ -1236,13 +1207,122 @@ compute_vaccine_impact_country <- function (allburden) {
   
   
   print ("end of function -- compute_vaccine_impact_country")
-  return ()
+  
+  # return vaccine impact table (shorter column names)
+  return (vaccine_impact_tab)
   
 } # end of function -- compute_vaccine_impact_country
 # ------------------------------------------------------------------------------
 
 
-
+# vaccine impact -- country and scenario comparison
+compare_vaccine_impact_country_scenario <- function (vaccine_impact_tab) {
+  
+  # ----------------------------------------------------------------------------
+  # Which countries change the most from the update --
+  # in terms of cases/deaths/dalys averted per 1000 vaccinated girls, 
+  # in % terms from the previous estimates
+  # --> ( (s5 - s1) / s1 ) * 100
+  
+  # vaccine impact data table of base simulation scenario (s1)
+  vaccine_impact_table_s1 <- vaccine_impact_tab [simulation == "s1"]
+  
+  # plot file -- percentage change in scenarios (s2, s3, s4, s5) in comparison 
+  # to base scenario s1 -- cases, deaths, yll, yld & dalys averted per 1000 FVG
+  pdf ("appendix/Figure-Country_comparison_vaccine_impact_scenarios.pdf")
+  
+  for (scenarios in c("s2", "s3", "s4", "s5")) {
+    
+    # vaccine impact data table of only updated simulation scenario (s5)
+    vaccine_impact_table_s5 <- vaccine_impact_tab [simulation == scenarios]
+    
+    # merge tables to compare scenarios -- s1 and s5 
+    # dat3=merge(dat1,dat2,by="ID") merge two tables by ID field
+    vaccine_impact_s1_s5 <- merge (vaccine_impact_table_s1, 
+                                   vaccine_impact_table_s5, 
+                                   by="country")
+    
+    # compute % change in burden averted between s1 and s5 scenarios
+    # --> ( (s5 - s1) / s1 ) * 100
+    vaccine_impact_s1_s5 [, cases_averted_ratio := ((cases_averted_perVG.y - 
+                                                       cases_averted_perVG.x) / 
+                                                      cases_averted_perVG.x) * 100]
+    
+    vaccine_impact_s1_s5 [, deaths_averted_ratio := ((deaths_averted_perVG.y - 
+                                                        deaths_averted_perVG.x) / 
+                                                       deaths_averted_perVG.x) * 100]
+    
+    vaccine_impact_s1_s5 [, yld_averted_ratio := ((yld_averted_perVG.y - 
+                                                     yld_averted_perVG.x) / 
+                                                    yld_averted_perVG.x) * 100]
+    
+    vaccine_impact_s1_s5 [, yll_averted_ratio := ((yll_averted_perVG.y - 
+                                                     yll_averted_perVG.x) / 
+                                                    yll_averted_perVG.x) * 100]
+    
+    vaccine_impact_s1_s5 [, dalys_averted_ratio := ((dalys_averted_perVG.y - 
+                                                       dalys_averted_perVG.x) / 
+                                                      dalys_averted_perVG.x) * 100]
+    
+    
+    # ----------------------------------------------------------------------------
+    
+    plotwhat <- c("cases_averted_ratio", 
+                  "deaths_averted_ratio",
+                  "yld_averted_ratio",
+                  "yll_averted_ratio", 
+                  "dalys_averted_ratio")
+    
+    y_axis <- c("Percentage change in cases averted",
+                "Percentage change in deaths averted", 
+                "Percentage change in YLDs averted", 
+                "Percentage change in YLLs averted", 
+                "Percentage change in DALYs averted")
+    
+    
+    # drop rows for Qatar and UAE (Globocan 2012 burden data ~ 0)
+    vaccine_impact_s1_s5 <- vaccine_impact_s1_s5 [country != "QAT" & country != "ARE"]
+    
+    plot_list = list ()
+    
+    plot_list <- lapply (1:length(plotwhat), function (i) {
+      
+      # which burden to plot
+      toplot = plotwhat[i]
+      
+      print (ggplot (data = vaccine_impact_s1_s5, 
+                     aes (x = reorder (Country.x, get(toplot)), y = get(toplot))) + 
+               geom_col (aes (fill = get(toplot)))  + 
+               labs (
+                 # x = "Country",
+                 x = NULL,
+                 y = paste0 (y_axis[i], " per 1000 vaccinated girls"),
+                 title = paste0 (y_axis[i], " per 1000 vaccinated girls"),
+                 subtitle = paste0 ("Comparsion of scenario ", scenarios, 
+                                    " in comparison to scenario s1")
+               )  +
+               theme_bw (base_size = 8) +
+               theme(legend.position="none") + 
+               theme (panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
+               scale_y_continuous (labels = scales::comma) + 
+               scale_colour_gradient2(low = muted("red"), mid = "white",
+                                      high = muted("blue"), midpoint = 0) +
+               coord_flip() + 
+               theme (axis.text.y=element_text(size=rel(0.5))) + 
+               scale_fill_gradientn(colours = rev(terrain.colors(10)))
+      )
+      
+    })
+    
+  }
+  
+  dev.off ()
+  # ----------------------------------------------------------------------------
+  
+  return ()
+  
+} # end of function -- compare_vaccine_impact_country_scenario
+# ------------------------------------------------------------------------------
 
 
 
@@ -1272,7 +1352,10 @@ compute_vaccine_impact (allburden)
 compute_vaccine_impact_regional (allburden)
 
 # compute vaccine impact -- country level
-compute_vaccine_impact_country (allburden)
+vaccine_impact_tab <- compute_vaccine_impact_country (allburden)
+
+# vaccine impact -- country and scenario comparison
+compare_vaccine_impact_country_scenario (vaccine_impact_tab)
 
 
 #-------------------------------------------------------------------------------
