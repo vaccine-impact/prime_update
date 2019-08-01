@@ -509,7 +509,8 @@ compute_vaccine_impact <- function (allburden) {
     toplot = plotwhat[i]
     
     p <- ggplot (vaccine_impact, 
-                 aes (x = simulation, y = get(toplot), fill= - get (toplot))) + 
+                 # aes (x = simulation, y = get(toplot), fill= - get (toplot))) + 
+                 aes (x = simulation, y = get(toplot), fill= toplot)) + 
       geom_bar (stat="identity") + 
       labs (
         x = "Scenario",
