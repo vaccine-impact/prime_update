@@ -1,36 +1,55 @@
-README
+File: README.txt
 
 This folder contains files for analysing different comparative scenarios and 
 assess the health impact estimates in the PRIME model. 
 
------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 Scenarios | Demography   | Disability weights | Cervical cancer burden
------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 s1        | WHO (2009)   | GBD 2001           | GLOBOCAN 2012
 s2        | UNWPP (2017) | GBD 2001           | GLOBOCAN 2012
 s3        | WHO (2009)   | GBD 2017           | GLOBOCAN 2012
 s4        | WHO (2009)   | GBD 2001           | GLOBOCAN 2018
 s5        | UNWPP (2017) | GBD 2017           | GLOBOCAN 2018
------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 
+--------------------------------------------------------------------------------
 Files:
+- run.R
+    Run file for PRIME modelling analysis for effects of demography, disability 
+    weights and cervical cancer burden on HPV vaccination impact estimates in 
+    177 countries.
+    By running this 1 file, complete analysis can be done and results generated.
+
 - batchrun.R 
-    Create batch of cohorts with information on 
-    countries, vaccination year, vaccination age and vaccination coverage, and
-    simulates the different comarative scenarios for these birth cohorts
-    and estimate/compare vaccination impact.
+    Generate burden estimates for different scenarios
 
 - analyse.R
-    Compare burden estimates and vaccination impact from the different scenarios.
+    Compare burden estimates and vaccination impact from the different scenarios
 
 - map.R
-    Create maps of cervical cancer burden (caused by HPV 16/18) averted by HPV vaccination.
-    Also, compute summary statistics of updated PRIME model (scenario s5). 
-
+    create maps of cervical cancer burden (caused by HPV 16/18) averted by HPV vaccination
+--------------------------------------------------------------------------------    
 Folders:
+
 - output
     Output files of disease burden estimates for different scenarios.
+    
 - results
     Plots and tables of results
+    
+- maps
+    Global maps of country-level vaccine impact estimates
+    
+- appendix
+    Figures (pdf files) and tables for paper (appendix)
+    
+- figures
+    Figures in the paper (main part)
+    
+- tables
+    Tables in the paper (main part) 
+
+--------------------------------------------------------------------------------
 
