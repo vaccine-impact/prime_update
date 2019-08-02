@@ -14,7 +14,9 @@ library (stats)
 
 rm (list = ls ())
 
+# ------------------------------------------------------------------------------
 # change column names for burden averted
+# ------------------------------------------------------------------------------
 change_colnames <- function (vaccine_impact) {
   
   # update column names for burden averted
@@ -35,8 +37,14 @@ change_colnames <- function (vaccine_impact) {
                     "dalys_averted_perVG"))
   
   return (vaccine_impact)
-}
+  
+} # end of function -- change_colnames
+# ------------------------------------------------------------------------------
 
+
+# ------------------------------------------------------------------------------
+# create maps of cervical cancer burden (caused by HPV 16/18) averted by HPV vaccination
+# ------------------------------------------------------------------------------
 create_map <- function (vaccine_impact, scenario) {
   
   # map tutorial
@@ -62,7 +70,7 @@ create_map <- function (vaccine_impact, scenario) {
   
   ggsave (paste0 ("maps/", scenario, "_cases_averted_per1000FVG.png"), 
           width = 6, height = 6, dpi = "screen")
-
+  
   # map of deaths averted per 1000 vaccinated girls
   deaths_a <- ggplot(data = dt) +
     geom_sf (aes(fill = deaths_averted_perVG, geometry = geometry)) + 
@@ -126,32 +134,27 @@ create_map <- function (vaccine_impact, scenario) {
   # save a copy of s5 map (cases, deaths, dalys) without mentioning s5 in the map
   if (scenario == "s5") {
     s5_map <- ggarrange (plotlist=plot_list, ncol = 1, nrow = 3)
-    ggsave (filename = "figures/s5_Figure-Burden_averted_per1000FVG_cases_deaths_dalys.png", 
+    ggsave (filename = "figures/Figure-Map_updated_burden_averted_per1000FVG_cases_deaths_dalys.png", 
             plot = s5_map, 
             width = 6, height = 7.5, units="in", dpi = 300)
   }
   
-  # png (paste0 ("maps/", scenario, "_Figure-Burden_averted_per1000FVG_cases_deaths_dalys.png"),
-  #       units="in", width=6, height=7.5, res=900)
-  
+  # print plot of maps
   print (q)
-  # dev.off ()
   
   # arrange plots of (YLDs, YLLs, DALYs) averted per 1000 vaccinated girls
   # in a single page
-  
   plot_list <- list (ylds_a, ylls_a, dalys_a)
   q <- ggarrange (plotlist=plot_list, ncol = 1, nrow = 3, 
                   labels = paste0 ("(scenario ", scenario, ")"), hjust = -4)
   
-  # png (paste0 ("maps/", scenario, "_Figure-Burden_averted_per1000FVG_ylds_ylls_dalys.png"),
-  #       units="in", width=6, height=7.5, res=900)
-  
+  # print plot of maps
   print (q)
-  # dev.off ()
   
   return ()
-}
+  
+} # end of function -- create_map
+# ------------------------------------------------------------------------------
 
 
 # generate summary statistics
@@ -163,29 +166,30 @@ compute_summary_stats <- function (vaccine_impact, scenario) {
   burden_averted <- colnames (vaccine_impact)[5:9]
   
   for (i in 1:5) {
-    
     # print summary statistics
     print (burden_averted[i])
     print (summary (vaccine_impact [, get(burden_averted [i])]))
     print (quantile (vaccine_impact [, get(burden_averted [i])], c(0.025, 0.975)))
-    
   }
+  
+} # end of function -- compute_summary_stats
+# ------------------------------------------------------------------------------
 
-}
 
+# ------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------
-# read vaccine impact table for updated PRIME
-# vaccine_impact <- fread (file = "results/Table-Vaccine_impact_s5_iso3.csv")
+# read vaccine impact table
 vaccine_impact <- fread (file = "appendix/Table-Vaccine_impact.csv")
 
 # change column names for burden averted
 vaccine_impact <- change_colnames (vaccine_impact)
 
 pdf ("appendix/Figure_Global_maps_vaccine_impact_scenarios.pdf")
+
 # create map
 for (i in c("s1", "s2", "s3", "s4", "s5")) {
-# for (i in c("s5")) {
+  # for (i in c("s5")) {
   print (i)  # run status
   
   # extract rows for a specific scenario
@@ -197,6 +201,7 @@ for (i in c("s1", "s2", "s3", "s4", "s5")) {
   # generate summary statistics
   compute_summary_stats (vaccine_impact_scenario, i)
 }
+
 dev.off ()
 
 
