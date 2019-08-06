@@ -144,8 +144,8 @@ plot_cecx_burden_pre_post_vaccination <- function (allburden)
   
   y_axis <- c("Cases", "Deaths", "YLDs", "YLLs", "DALYs")
   
-  # counter <- 0
-  counter <- 174
+  counter <- 0
+  # counter <- 174
   
   # loop through each country
   for (countries in unique (allburden$country)) {
@@ -429,6 +429,65 @@ create_table_country_burden <- function (allburden) {
 
 
 # ------------------------------------------------------------------------------
+# create and save 2 global vaccine impact tables: 
+# (i) Global estimates of HPV vaccination impact
+# Number of girls needed to be vaccinated to prevent cervical cancer caused by HPV 16/18
+# ------------------------------------------------------------------------------
+save_global_vaccine_impact_tables <- function (vaccine_impact) {
+  
+  # make a copy of global vaccine impact
+  global_impact <- copy (vaccine_impact)
+  
+  # extract specific columns of interest
+  # simulation scenario and cervical cancer burden averted per 1000 vaccinated girls
+  global_impact <- global_impact [, .(simulation, 
+                                      cases_averted_perVG, 
+                                      deaths_averted_perVG, 
+                                      yld_averted_perVG, 
+                                      yll_averted_perVG, 
+                                      dalys_averted_perVG)]
+  
+  # compute -- Number of girls needed to be vaccinated to prevent cervical cancer caused by HPV 16/18
+  global_impact [, numvac_prevent_case  := 1000 / cases_averted_perVG]
+  global_impact [, numvac_prevent_death := 1000 / deaths_averted_perVG]
+  global_impact [, numvac_prevent_yld   := 1000 / yld_averted_perVG]
+  global_impact [, numvac_prevent_yll   := 1000 / yll_averted_perVG]
+  global_impact [, numvac_prevent_daly  := 1000 / dalys_averted_perVG]
+  
+  # save tables of global vaccination impact 
+  fwrite (global_impact, 
+          "results/Table-Global_vaccination_impact.csv",
+          col.names = T, row.names = F)
+  
+  # burden averted per 1000 vaccinated girls (round off to 2 decimal points)
+  fwrite (global_impact [, lapply(.SD, round, 2), 
+                         .SDcols = c("cases_averted_perVG", 
+                                     "deaths_averted_perVG", 
+                                     "yld_averted_perVG", 
+                                     "yll_averted_perVG", 
+                                     "dalys_averted_perVG"),
+                         by = .(simulation)],  
+          "tables/Table-Global_vaccination_impact_burden_averted.csv",
+          col.names = T, row.names = F)
+  
+  # number of girls needed to be vaccinated to prevent 
+  # 1 case / 1 death / 1 yld / 1 yll / 1 daly (round off to 2 decimal points)
+  fwrite (global_impact [, lapply(.SD, round, 2), 
+                         .SDcols = c("numvac_prevent_case", 
+                                     "numvac_prevent_death", 
+                                     "numvac_prevent_yld", 
+                                     "numvac_prevent_yll", 
+                                     "numvac_prevent_daly"),
+                         by = .(simulation)], 
+          "tables/Table-Global_vaccination_impact_numvac_prevent_burden.csv",
+          col.names = T, row.names = F)
+  
+  
+} # end of function -- save_global_vaccine_impact_tables
+# ------------------------------------------------------------------------------
+
+
+# ------------------------------------------------------------------------------
 # compute vaccine impact and comparison metrics -- global level
 # ------------------------------------------------------------------------------
 compute_vaccine_impact <- function (allburden) {
@@ -478,6 +537,11 @@ compute_vaccine_impact <- function (allburden) {
                           yld_averted_perVG    = yld_averted    / i.total_vaccines * 1000,
                           yll_averted_perVG    = yll_averted    / i.total_vaccines * 1000,
                           dalys_averted_perVG  = dalys_averted  / i.total_vaccines * 1000)]
+  
+  # create and save 2 global vaccine impact tables: 
+  # (i) Global estimates of HPV vaccination impact
+  # Number of girls needed to be vaccinated to prevent cervical cancer caused by HPV 16/18
+  save_global_vaccine_impact_tables (vaccine_impact)
   
   total <- c("cases_averted_perVG", 
              "deaths_averted_perVG", 
@@ -832,10 +896,9 @@ compute_vaccine_impact_regional <- function (allburden) {
                              by = .(who_region)]
   
   # save save vaccine impact data table of only updated simulation scenario
-  fwrite (vaccine_impact_table_s5, 
-          "results/Table-Vaccine_impact_region_PRIME_update.csv",
+  fwrite (vaccine_impact_table_s5 [order (-`DALYs averted per 1000 vaccinated girls`)], 
+          "tables/Table-Vaccine_impact_region_PRIME_update.csv",
           col.names = T, row.names = F)
-  
   
   return ()
   
@@ -909,8 +972,8 @@ compute_vaccine_impact_country <- function (allburden) {
   # plot file -- cases, deaths, ylls, ylds & dalys for 5 scenarios in 177 countries (177 pages)
   pdf ("appendix/Figure-Country_vaccine_impact.pdf")  
   
-  # counter <- 0
-  counter <- 174
+  counter <- 0
+  # counter <- 174
   
   # loop through each country
   for (countries in unique (vaccine_impact$country)) {
@@ -1097,7 +1160,7 @@ compute_vaccine_impact_country <- function (allburden) {
   
   # save save vaccine impact data table of only updated simulation scenario
   fwrite (vaccine_impact_table_s5, 
-          "results/Table-Vaccine_impact_PRIME_update.csv",
+          "tables/Table-Vaccine_impact_country_PRIME_update.csv",
           col.names = T, row.names = F)
   
   # return vaccine impact table (shorter column names)
