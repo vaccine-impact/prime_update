@@ -3,6 +3,9 @@
 /results/*
 /maps/*
 /appendix/*
+*.pdf
+*.png
+*.csv
 
 
 # History files

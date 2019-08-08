@@ -4,6 +4,9 @@
 # weights and cervical cancer burden on HPV vaccination impact estimates in 
 # 177 countries
 
+library (tictoc)
+tic ()
+
 # generate burden estimates for all 5 scenarios
 source ("batchrun.R")
 
@@ -12,3 +15,5 @@ source ("analyse.R")
 
 # create maps of cervical cancer burden (caused by HPV 16/18) averted by HPV vaccination
 source ("map.R")
+
+toc ()
