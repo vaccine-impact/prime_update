@@ -5,6 +5,17 @@
 # 177 countries
 
 library (tictoc)
+library (data.table)    # data table
+library (ggplot2)       # graphics
+library (tictoc)        # timing R scripts
+library (foreach)       # looping -- supports parallel execution
+library (doParallel)    # Foreach Parallel Adaptor for the 'parallel' Package
+library (prime)         # PRIME model
+
+# remove all objects from workspace
+rm (list = ls ())
+
+
 tic ()
 
 # generate burden estimates for all 5 scenarios
