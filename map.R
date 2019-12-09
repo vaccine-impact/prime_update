@@ -12,7 +12,7 @@ library (ggforce)
 library (ggpubr)
 library (stats)
 
-rm (list = ls ())
+# rm (list = ls ())
 
 # ------------------------------------------------------------------------------
 # change column names for burden averted

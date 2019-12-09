@@ -25,33 +25,10 @@
 ################################################################################
 
 
-# ------------------------------------------------------------------------------
-# program start -- load libraries, etc
-# ------------------------------------------------------------------------------
-program_start_batchrun <- function ()
-{
-  # remove all objects from workspace
-  # remove (list = objects() )
-
-  # start time
-  print (Sys.time ())
-
-  # # load libraries
-  # library (data.table)    # data table
-  # library (ggplot2)       # graphics
-  # library (tictoc)        # timing R scripts
-  # library (foreach)       # looping -- supports parallel execution
-  # library (doParallel)    # Foreach Parallel Adaptor for the 'parallel' Package
-  # library (prime)         # PRIME model
-
-} # end of function -- program_start_batchrun
-# ------------------------------------------------------------------------------
-
-
 #-------------------------------------------------------------------------------
 # create batch file for vaccination of cohorts
 # ------------------------------------------------------------------------------
-batch_cohort_vaccination <- function () {
+batch_cohort_vaccination <- function (vaccination_age = 9) {
 
   # initialise an empty batch input table
   batch_total <- data.table (country_code = character (),
@@ -62,15 +39,15 @@ batch_cohort_vaccination <- function () {
 
   # cohorts for a single country
   batch_country <- data.table (year      = 2020:2029,
-                               age_first = 9,
-                               age_last  = 9,
+                               age_first = vaccination_age,
+                               age_last  = vaccination_age,
                                coverage  = 0.9)
 
 
   # create comple batch input/info file for all countries
   # # for (iso3_code in data.incidence$iso3) {
-  for (iso3_code in data.incidence [Year == 2018, iso3]) {
-  # for (iso3_code in data.incidence [Year == 2018, iso3] [3:4]) {
+#   for (iso3_code in data.incidence [Year == 2018, iso3]) {
+  for (iso3_code in data.incidence [Year == 2018, iso3] [3:3]) {
 
 
     # exclude countries for which runs don't work -- check later # debug
@@ -98,7 +75,8 @@ batch_cohort_vaccination <- function () {
 #-------------------------------------------------------------------------------
 # run batch file for vaccination of cohorts and estimate vaccination impact
 # ------------------------------------------------------------------------------
-estimate_vaccine_impact <- function (vaccine) {
+estimate_vaccine_impact <- function (vaccine, 
+                                     vaccination_age) {
 
   ##############################################################################
 # 1) unwpp_mortality = FALSE, disability.weights = "gbd_2001", canc.inc = "2012"
@@ -148,7 +126,13 @@ estimate_vaccine_impact <- function (vaccine) {
     ################################################################################
 
     # save full results
-    results_file <- paste0 ("output/s", i, "_results.csv")
+    results_file <- paste0 ("output/s", 
+                            i, 
+                            "_results_age", 
+                            vaccination_age, 
+                            "_", 
+                            vaccine, 
+                            ".csv")
     fwrite (results, results_file)
 
     toc ()  # track simulation time -- stop
@@ -159,25 +143,38 @@ estimate_vaccine_impact <- function (vaccine) {
 
 
 # ------------------------------------------------------------------------------
+# start of program
+print (Sys.time ())
 # ------------------------------------------------------------------------------
 
-# start of program
-program_start_batchrun ()  # load libraries, etc
+# vaccination age and HPV vaccine type
+vaccination_ages <- c (9, 12)
+vaccines         <- c ("4vHPV", "9vHPV")
 
-# create batch of cohorts with information on
-# countries, vaccination year, vaccination age, vaccination coverage
-batch_cohorts <- batch_cohort_vaccination ()
-
-# register batch cohorts
-RegisterBatchData (batch_cohorts, force = T)
-
-cl <- makeCluster (detectCores())   # registering number of cores
-registerDoParallel (cl)             # start of parallelisation
-
-# run batch file for vaccination of cohorts and estimate vaccination impact
-estimate_vaccine_impact (vaccine = "9vHPV")
-
-stopCluster (cl)                    # end of parallelisation
+# loop through vaccination ages
+for (vaccination_age in vaccination_ages) {
+  
+  # loop through vaccines
+  for (vaccine in vaccines) {
+    
+    # create batch of cohorts with information on
+    # countries, vaccination year, vaccination age, vaccination coverage
+    batch_cohorts <- batch_cohort_vaccination (vaccination_age = vaccination_age)
+    print (batch_cohorts)
+    
+    # register batch cohorts
+    RegisterBatchData (batch_cohorts, force = T)
+    
+    cl <- makeCluster (detectCores())   # registering number of cores
+    registerDoParallel (cl)             # start of parallelisation
+    
+    # run batch file for vaccination of cohorts and estimate vaccination impact
+    estimate_vaccine_impact (vaccine         = vaccine, 
+                             vaccination_age = vaccination_age)
+    
+    stopCluster (cl)                    # end of parallelisation
+  }
+}
 
 #-------------------------------------------------------------------------------
 print (Sys.time ())

@@ -11,38 +11,13 @@
 
 
 # ------------------------------------------------------------------------------
-# program start  -- load libraries, etc
-# ------------------------------------------------------------------------------
-program_start_analyse <- function ()
-{
-  # remove all objects from workspace
-  remove (list = objects() )
-
-  # start time
-  print (Sys.time ())
-
-  # load libraries
-  library (data.table)    # data table
-  library (ggplot2)       # graphics
-  library (tictoc)
-  library (countrycode)
-  library (ggforce)
-  library (ggpubr)
-  library (rworldmap)
-  library (scales)
-  library (prime)
-
-} # end of function -- program_start_analyse
-# ------------------------------------------------------------------------------
-
-
-# ------------------------------------------------------------------------------
 # Combine burden estimates from different simulation scenarios
 # Add columns for calendar year, cases, deaths, yld, yll, dalys
 # Add columns for (cases, deaths, yld, yll, dalys) per 100,000
 # Add column for number of vaccines administered
 # ------------------------------------------------------------------------------
-combine_burden_estimate <- function () {
+combine_burden_estimate <- function (vaccine, 
+                                     vaccination_age) {
 
   # simulation scenarios
   simulations = c("s1", "s2", "s3", "s4", "s5")
@@ -52,7 +27,10 @@ combine_burden_estimate <- function () {
   for (i in 1:length(simulations)) {
 
     # read burden estimate of one simulation scenario
-    burdenfile <- paste0 ("output/", simulations[i], "_results.csv")
+    # burdenfile <- paste0 ("output/", simulations[i], "_results.csv")
+    burdenfile <- paste0 ("output/", simulations[i], "_results_age", 
+                          vaccination_age, "_", vaccine, ".csv")
+    
     burden <- fread (burdenfile, header = "auto", stringsAsFactors = F)
 
     # set scenario number
@@ -130,14 +108,23 @@ add_WHO_region <- function (allburden) {
 # plot cervical cancer burden (cases, deaths, yld, yll, dalys) pre- and post-vaccination
 # plot for each country, each region and at global level
 # ------------------------------------------------------------------------------
-plot_cecx_burden_pre_post_vaccination <- function (allburden)
+plot_cecx_burden_pre_post_vaccination <- function (allburden, 
+                                                   vaccine         = vaccine, 
+                                                   vaccination_age = vaccination_age)
 {
+  # vaccine specific protection against cervical cancer causing HPV types 
+  hpv_types <- switch (vaccine, 
+                       "4vHPV" = "HPV 16/18", 
+                       "9vHPV" = "HPV 16/18/31/33/45/52/58")
+  
+  
   # ----------------------------------------------------------------------------
   # burden comparison plot for each country
   # ----------------------------------------------------------------------------
 
   # plot file
-  pdf ("appendix/Figure-Country_burden_pre_post_vaccination.pdf")
+  pdf (paste0 ("appendix/Figure-Country_burden_pre_post_vaccination_age", 
+               vaccination_age, "_", vaccine, ".pdf"))
 
   # what burden to plot
   plotwhat = c("cases", "deaths", "yld", "yll", "dalys")
@@ -190,7 +177,8 @@ plot_cecx_burden_pre_post_vaccination <- function (allburden)
   # ----------------------------------------------------------------------------
 
   # plot file
-  pdf ("appendix/Figure-WHOregion_burden_pre_post_vaccination.pdf")
+  pdf (paste0 ("appendix/Figure-WHOregion_burden_pre_post_vaccination_age", 
+               vaccination_age, "_", vaccine, ".pdf"))
 
   who_regions <- data.table (who_region_code = c("AFR", "AMR", "EMR", "EUR", "SEAR", "WPR"),
                              who_region_name = c("African Region",
@@ -247,7 +235,8 @@ plot_cecx_burden_pre_post_vaccination <- function (allburden)
   # ----------------------------------------------------------------------------
 
   # plot file
-  pdf ("results/Figure-Global_burden_pre_post_vaccination.pdf")
+  pdf (paste0 ("results/Figure-Global_burden_pre_post_vaccination_age", 
+               vaccination_age, "_", vaccine, ".pdf"))
 
   # apply sum function to burden columns
   # dt[, lapply(.SD, sum, na.rm=TRUE), by=category ]
@@ -255,6 +244,10 @@ plot_cecx_burden_pre_post_vaccination <- function (allburden)
                               .SDcols = c ("cases", "deaths", "yld", "yll", "dalys"),
                               by=.(age, scenario, type, simulation, birthcohort)]
 
+  
+  
+
+  
   # loop through each burden metric
   for (i in 1:length (plotwhat)) {
     toplot = plotwhat[i]
@@ -267,7 +260,14 @@ plot_cecx_burden_pre_post_vaccination <- function (allburden)
              theme_bw (base_size = 8) +
              labs (
                x="Year of birth",
-               y=y_axis[i]) +
+               y=y_axis[i], 
+               title = paste0 ("Lifetime burden of cervical cancer ", 
+                               y_axis[i], 
+                               " caused by ", 
+                               hpv_types, 
+                               " pre- and post-vaccination \n (vaccination age = ", 
+                               vaccination_age, 
+                               " years)")) + 
              scale_x_continuous(breaks=seq(2011, 2020, 3)) +
              theme (panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
              scale_y_continuous (labels = scales::comma)
@@ -290,19 +290,27 @@ plot_cecx_burden_pre_post_vaccination <- function (allburden)
 
     # figure files
     if (j == 1) {
-
-      png ("figures/Figure-Global_lifetime_burden_pre_post_vaccination_cases_deaths.png",
+      
+      png (paste0 ("figures/Figure-Global_lifetime_burden_pre_post_vaccination_cases_deaths_age", 
+                   vaccination_age, "_", vaccine, ".png"), 
            units="in", width=6, height=9, res=300)
 
     } else if (j == 2) {
 
-      png ("figures/Figure-Global_lifetime_burden_pre_post_vaccination_ylds_ylls_dalys.png",
+      png (paste0 ("figures/Figure-Global_lifetime_burden_pre_post_vaccination_ylds_ylls_dalys_age", 
+                   vaccination_age, "_", vaccine, ".png"), 
            units="in", width=6, height=9, res=300)
     }
 
-    plot_title <- c ("Lifetime burden of cervical cancer (cases, deaths) caused by HPV 16/18 pre- and post-vaccination",
-                     "Lifetime burden of cervical cancer (YLDs, YLLs, YLDs) caused by HPV 16/18 pre- and post-vaccination")
-
+    if (vaccine == "4vHPV") {
+      plot_title <- c ("Lifetime burden of cervical cancer (cases, deaths) \n caused by HPV 16/18 pre- and post-vaccination",
+                       "Lifetime burden of cervical cancer (YLDs, YLLs, YLDs) \n caused by HPV 16/18 pre- and post-vaccination")
+    }
+    else if (vaccine == "9vHPV") {
+      plot_title <- c ("Lifetime burden of cervical cancer (cases, deaths) \n caused by HPV 16/18/31/33/45/52/58 pre- and post-vaccination",
+                       "Lifetime burden of cervical cancer (YLDs, YLLs, YLDs) \n caused by HPV 16/18/31/33/45/52/58 pre- and post-vaccination")
+    }
+    
     # 1 plot for cases, deaths (and) another plot for ylds, ylls, dalys
     if (j == 1) {
       plotwhat <- c("cases", "deaths")
@@ -336,7 +344,10 @@ plot_cecx_burden_pre_post_vaccination <- function (allburden)
 
     print (
       annotate_figure (q,
-                       top = text_grob (plot_title [j],
+                       top = text_grob (paste0 (plot_title [j], 
+                                               " (vaccination age = ", 
+                                               vaccination_age,
+                                               " years)"),
                                         color = "black",
                                         size = 9)))
 
@@ -1283,41 +1294,58 @@ compare_vaccine_impact_country_scenario <- function (vaccine_impact_tab) {
 # ------------------------------------------------------------------------------
 
 
-
 # ------------------------------------------------------------------------------
-# ------------------------------------------------------------------------------
-
 # start of program
-program_start_analyse ()  # load libraries, etc
+print (Sys.time ())
+# ------------------------------------------------------------------------------
 
-# Combine burden estimates from different simulation scenarios
-allburden <- combine_burden_estimate ()
+# loop through vaccination ages
+for (vaccination_age in vaccination_ages) {
+  
+  # loop through vaccines
+  for (vaccine in vaccines) {
+    
+    # Combine burden estimates from different simulation scenarios
+    allburden <- combine_burden_estimate (vaccine         = vaccine, 
+                                          vaccination_age = vaccination_age)
+    
+    # Add WHO burden region (column)
+    allburden <- add_WHO_region (allburden)
+    
+    # plot cervical cancer burden (cases, deaths, yld, yll, dalys) pre- and post-vaccination
+    # plot for each country and at global level
+    plot_cecx_burden_pre_post_vaccination (allburden, 
+                                           vaccine         = vaccine, 
+                                           vaccination_age = vaccination_age)
+    
+    
+  }
+}
 
-# Add WHO burden region (column)
-allburden <- add_WHO_region (allburden)
-
-# plot cervical cancer burden (cases, deaths, yld, yll, dalys) pre- and post-vaccination
-# plot for each country and at global level
-plot_cecx_burden_pre_post_vaccination (allburden)
-
-# create table of country-specific cervical cancer burden
-create_table_country_burden (allburden)
-
-# compute vaccine impact -- global level
-compute_vaccine_impact (allburden)
-
-# compute vaccine impact -- regional level
-compute_vaccine_impact_regional (allburden)
-
-# compute vaccine impact -- country level
-vaccine_impact_tab <- compute_vaccine_impact_country (allburden)
-
-# vaccine impact -- country and scenario comparison
-compare_vaccine_impact_country_scenario (vaccine_impact_tab)
+    
+    
+    
+    # create table of country-specific cervical cancer burden
+    create_table_country_burden (allburden)
+    
+    # compute vaccine impact -- global level
+    compute_vaccine_impact (allburden)
+    
+    # compute vaccine impact -- regional level
+    compute_vaccine_impact_regional (allburden)
+    
+    # compute vaccine impact -- country level
+    vaccine_impact_tab <- compute_vaccine_impact_country (allburden)
+    
+    # vaccine impact -- country and scenario comparison
+    compare_vaccine_impact_country_scenario (vaccine_impact_tab)
+    
+  }
+}
 
 
 # ------------------------------------------------------------------------------
 print (Sys.time ())
 # end of program
 # ------------------------------------------------------------------------------
-# ------------------------------------------------------------------------------
+
