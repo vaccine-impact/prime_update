@@ -28,7 +28,7 @@
 #-------------------------------------------------------------------------------
 # create batch file for vaccination of cohorts
 # ------------------------------------------------------------------------------
-batch_cohort_vaccination <- function (vaccination_age = 9) {
+batch_cohort_vaccination <- function (vaccination_age) {
 
   # initialise an empty batch input table
   batch_total <- data.table (country_code = character (),
@@ -46,8 +46,8 @@ batch_cohort_vaccination <- function (vaccination_age = 9) {
 
   # create comple batch input/info file for all countries
   # # for (iso3_code in data.incidence$iso3) {
-#   for (iso3_code in data.incidence [Year == 2018, iso3]) {
-  for (iso3_code in data.incidence [Year == 2018, iso3] [3:3]) {
+  for (iso3_code in data.incidence [Year == 2018, iso3]) {
+  # for (iso3_code in data.incidence [Year == 2018, iso3] [3:3]) {
 
 
     # exclude countries for which runs don't work -- check later # debug
@@ -147,10 +147,6 @@ estimate_vaccine_impact <- function (vaccine,
 print (Sys.time ())
 # ------------------------------------------------------------------------------
 
-# vaccination age and HPV vaccine type
-vaccination_ages <- c (9, 12)
-vaccines         <- c ("4vHPV", "9vHPV")
-
 # loop through vaccination ages
 for (vaccination_age in vaccination_ages) {
   
@@ -160,7 +156,8 @@ for (vaccination_age in vaccination_ages) {
     # create batch of cohorts with information on
     # countries, vaccination year, vaccination age, vaccination coverage
     batch_cohorts <- batch_cohort_vaccination (vaccination_age = vaccination_age)
-    print (batch_cohorts)
+    
+    # print (batch_cohorts)  # testing/debug remove later
     
     # register batch cohorts
     RegisterBatchData (batch_cohorts, force = T)

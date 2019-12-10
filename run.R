@@ -18,10 +18,6 @@ library (scales)
 library (prime)         # PRIME model
 
 
-
-
-
-
 # remove all objects from workspace
 rm (list = ls ())
 
@@ -29,8 +25,14 @@ rm (list = ls ())
 print (Sys.time ())
 tic ()
 
+# vaccination age and HPV vaccine type
+vaccination_ages <- c (9, 12)
+vaccines         <- c ("4vHPV", "9vHPV")
+
 # generate burden estimates for all 5 scenarios
-source ("batchrun.R")
+# source ("batchrun.R")  #### UNCOMMENT this line for full run
+
+
 
 # compare burden estimates and vaccination impact from the 5 scenarios
 source ("analyse.R")
