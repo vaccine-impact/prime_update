@@ -51,5 +51,11 @@ Folders:
 - tables
     Tables in the paper (main part) 
 
+- paper_results
+    Results (numbers) for the paper
+
+- final
+    Final set of figures and tables for the paper
+
 --------------------------------------------------------------------------------
 

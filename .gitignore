@@ -45,3 +45,7 @@ vignettes/*.pdf
 # Shiny token, see https://shiny.rstudio.com/articles/shinyapps.html
 rsconnect/
 analyse_1Aug2019.R
+paper_results/results_age12_4vHPV.txt
+paper_results/results_age12_9vHPV.txt
+paper_results/results_age9_4vHPV.txt
+paper_results/results_age9_9vHPV.txt

@@ -45,7 +45,15 @@ change_colnames <- function (vaccine_impact) {
 # ------------------------------------------------------------------------------
 # create maps of cervical cancer burden (caused by HPV 16/18) averted by HPV vaccination
 # ------------------------------------------------------------------------------
-create_map <- function (vaccine_impact, scenario) {
+create_map <- function (vaccine_impact, 
+                        scenario, 
+                        vaccine, 
+                        vaccination_age) {
+  
+  # set vaccine type
+  vaccine_type <- switch (vaccine, 
+                          "4vHPV" = "bivalent/quadrivalent", 
+                          "9vHPV" = "nonavalent")
   
   # map tutorial
   # https://www.r-spatial.org/r/2018/10/25/ggplot2-sf.html
@@ -63,6 +71,9 @@ create_map <- function (vaccine_impact, scenario) {
     geom_sf (aes(fill = cases_averted_perVG, geometry = geometry)) + 
     scale_fill_viridis_c(option = "plasma", direction = -1) +
     ggtitle ("Cases averted per 1000 vaccinated girls") + 
+    # labs (title = "Cases averted per 1000 vaccinated girls", 
+    #       subtitle = paste0 ("(vaccination age = ", vaccination_age,  
+    #                          " years / vaccine = ", vaccine_type, " vaccine)") ) + 
     theme(legend.title = element_blank()) + 
     theme(axis.text.x = element_blank(), axis.ticks = element_blank()) + 
     theme(axis.text.y = element_blank(), axis.ticks = element_blank()) + 
@@ -76,6 +87,9 @@ create_map <- function (vaccine_impact, scenario) {
     geom_sf (aes(fill = deaths_averted_perVG, geometry = geometry)) + 
     scale_fill_viridis_c(option = "plasma", direction = -1) +
     ggtitle ("Deaths averted per 1000 vaccinated girls") + 
+    # labs (title = "Deaths averted per 1000 vaccinated girls", 
+    #       subtitle = paste0 ("(vaccination age = ", vaccination_age,  
+    #                          " years / vaccine = ", vaccine_type, " vaccine)") ) +
     theme(legend.title = element_blank()) + 
     theme(axis.text.x = element_blank(), axis.ticks = element_blank()) + 
     theme(axis.text.y = element_blank(), axis.ticks = element_blank()) + 
@@ -89,6 +103,9 @@ create_map <- function (vaccine_impact, scenario) {
     geom_sf (aes(fill = yld_averted_perVG, geometry = geometry)) + 
     scale_fill_viridis_c(option = "plasma", direction = -1) + 
     ggtitle ("YLDs averted per 1000 vaccinated girls") + 
+    # labs (title = "YLDs averted per 1000 vaccinated girls", 
+    #       subtitle = paste0 ("(vaccination age = ", vaccination_age,  
+    #                          " years / vaccine = ", vaccine_type, " vaccine)") ) +
     theme(legend.title = element_blank()) + 
     theme(axis.text.x = element_blank(), axis.ticks = element_blank()) + 
     theme(axis.text.y = element_blank(), axis.ticks = element_blank()) + 
@@ -102,6 +119,9 @@ create_map <- function (vaccine_impact, scenario) {
     geom_sf (aes(fill = yll_averted_perVG, geometry = geometry)) + 
     scale_fill_viridis_c(option = "plasma", direction = -1) + 
     ggtitle ("YLLs averted per 1000 vaccinated girls") + 
+    # labs (title = "YLLs averted per 1000 vaccinated girls", 
+    #       subtitle = paste0 ("(vaccination age = ", vaccination_age,  
+    #                          " years / vaccine = ", vaccine_type, " vaccine)") ) +
     theme(legend.title = element_blank()) + 
     theme(axis.text.x = element_blank(), axis.ticks = element_blank()) + 
     theme(axis.text.y = element_blank(), axis.ticks = element_blank()) + 
@@ -115,26 +135,38 @@ create_map <- function (vaccine_impact, scenario) {
     geom_sf (aes(fill = dalys_averted_perVG, geometry = geometry)) + 
     scale_fill_viridis_c(option = "plasma", direction = -1) + 
     ggtitle ("DALYs averted per 1000 vaccinated girls") + 
+    # labs (title = "DALYs averted per 1000 vaccinated girls", 
+    #       subtitle = paste0 ("(vaccination age = ", vaccination_age,  
+    #                          " years / vaccine = ", vaccine_type, " vaccine)") ) +
     theme(legend.title = element_blank()) + 
     theme(axis.text.x = element_blank(), axis.ticks = element_blank()) + 
     theme(axis.text.y = element_blank(), axis.ticks = element_blank()) + 
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
   
   ggsave (paste0 ("maps/", scenario, "_dalys_averted_per1000FVG.png"), 
-          width = 6, height = 6, dpi = "screen")
+          width = 6, height = 7, dpi = "screen")
   
   
   # arrange plots of (cases, deaths and DALYs) averted per 1000 vaccinated girls
   # in a single page
   
+  label_name <- paste0 ("scenario ", scenario, 
+                        " / vaccination age = ", vaccination_age, 
+                        " years / ", vaccine_type, " vaccine") 
+  print (label_name)
+  
   plot_list <- list (cases_a, deaths_a, dalys_a)
   q <- ggarrange (plotlist=plot_list, ncol = 1, nrow = 3, 
-                  labels = paste0 ("(scenario ", scenario, ")"), hjust = -4)
+                  labels = label_name, 
+                  font.label = list (size = 6, color = "black", face =
+                                      "plain", family = NULL), 
+                  hjust = -1.6)
   
   # save a copy of s5 map (cases, deaths, dalys) without mentioning s5 in the map
   if (scenario == "s5") {
     s5_map <- ggarrange (plotlist=plot_list, ncol = 1, nrow = 3)
-    ggsave (filename = "figures/Figure-Map_updated_burden_averted_per1000FVG_cases_deaths_dalys.png", 
+    ggsave (filename = paste0 ("figures/Figure-Map_s5_burden_averted_per1000FVG_cases_deaths_dalys_age", 
+                               vaccination_age, "_", vaccine, ".png"),
             plot = s5_map, 
             width = 6, height = 7.5, units="in", dpi = 300)
   }
@@ -146,7 +178,10 @@ create_map <- function (vaccine_impact, scenario) {
   # in a single page
   plot_list <- list (ylds_a, ylls_a, dalys_a)
   q <- ggarrange (plotlist=plot_list, ncol = 1, nrow = 3, 
-                  labels = paste0 ("(scenario ", scenario, ")"), hjust = -4)
+                  labels = label_name, 
+                  font.label = list (size = 6, color = "black", face =
+                                       "plain", family = NULL), 
+                  hjust = -1.6)
   
   # print plot of maps
   print (q)
@@ -158,10 +193,20 @@ create_map <- function (vaccine_impact, scenario) {
 
 
 # generate summary statistics
-compute_summary_stats <- function (vaccine_impact, scenario) {
+compute_summary_stats <- function (vaccine_impact, 
+                                   scenario, 
+                                   vaccine, 
+                                   vaccination_age) {
+  
+  # set vaccine type
+  vaccine_type <- switch (vaccine, 
+                          "4vHPV" = "bivalent/quadrivalent", 
+                          "9vHPV" = "nonavalent")
   
   # print scenario
-  print (paste0 ("Scenario = ", scenario))
+  cat (paste0 ("\n Scenario = ", scenario, 
+                 " / vaccination age = ", vaccination_age, 
+                 " /  vaccine = ", vaccine_type) )
   
   burden_averted <- colnames (vaccine_impact)[5:9]
   
@@ -177,32 +222,63 @@ compute_summary_stats <- function (vaccine_impact, scenario) {
 
 
 # ------------------------------------------------------------------------------
+# start of program
+print (Sys.time ())
 # ------------------------------------------------------------------------------
 
-# read vaccine impact table
-vaccine_impact <- fread (file = "appendix/Table-Vaccine_impact.csv")
-
-# change column names for burden averted
-vaccine_impact <- change_colnames (vaccine_impact)
-
-pdf ("appendix/Figure_Global_maps_vaccine_impact_scenarios.pdf")
-
-# create map
-for (i in c("s1", "s2", "s3", "s4", "s5")) {
-  # for (i in c("s5")) {
-  print (i)  # run status
+# loop through vaccination ages
+for (vaccination_age in vaccination_ages) {
   
-  # extract rows for a specific scenario
-  vaccine_impact_scenario <- vaccine_impact [Scenario == i]
-  
-  # create map for a specific scenario
-  create_map (vaccine_impact_scenario, i)
-  
-  # generate summary statistics
-  compute_summary_stats (vaccine_impact_scenario, i)
+  # loop through vaccines
+  for (vaccine in vaccines) {
+    
+    # read vaccine impact table
+    vaccine_impact <- fread (file = paste0 ("appendix/Table-Vaccine_impact_age", 
+                                            vaccination_age, "_", vaccine, ".csv"))
+                                            
+    # change column names for burden averted
+    vaccine_impact <- change_colnames (vaccine_impact)
+    
+    pdf (paste0 ("appendix/Figure_Global_maps_vaccine_impact_scenarios_age", 
+                 vaccination_age, "_", vaccine, ".pdf"))
+    
+    # save Results (numbers) for the paper
+    sink (file = paste0 ("paper_results/results_age", 
+                  vaccination_age, "_", vaccine, ".txt"),  
+         append = F, 
+         split  = TRUE)
+    
+    # create map
+    for (i in c("s1", "s2", "s3", "s4", "s5")) {
+
+      # extract rows for a specific scenario
+      vaccine_impact_scenario <- vaccine_impact [Scenario == i]
+      
+      # create map for a specific scenario
+      create_map (vaccine_impact_scenario, 
+                  i, 
+                  vaccine         = vaccine, 
+                  vaccination_age = vaccination_age)
+      
+      # generate summary statistics
+      compute_summary_stats (vaccine_impact_scenario, 
+                             i, 
+                             vaccine         = vaccine, 
+                             vaccination_age = vaccination_age)
+    }
+    
+    sink ()
+    
+    dev.off ()
+    
+  }
 }
 
-dev.off ()
+# ------------------------------------------------------------------------------
+print (Sys.time ())
+# end of program
+# ------------------------------------------------------------------------------
+
 
 
 

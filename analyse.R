@@ -110,8 +110,13 @@ add_WHO_region <- function (allburden) {
 # ------------------------------------------------------------------------------
 plot_cecx_burden_pre_post_vaccination <- function (allburden, 
                                                    vaccine, 
-                                                   vaccination_age)
-{
+                                                   vaccination_age) {
+  
+  # set vaccine type
+  vaccine_type <- switch (vaccine, 
+                          "4vHPV" = "bivalent/quadrivalent", 
+                          "9vHPV" = "nonavalent")
+  
   # vaccine specific protection against cervical cancer causing HPV types 
   hpv_types <- switch (vaccine, 
                        "4vHPV" = "HPV 16/18", 
@@ -131,8 +136,8 @@ plot_cecx_burden_pre_post_vaccination <- function (allburden,
 
   y_axis <- c("Cases", "Deaths", "YLDs", "YLLs", "DALYs")
 
-  # counter <- 0
-  counter <- 174
+  # counter <- 0   # UNCOMMENT this line for final run
+  counter <- 174   # COMMENT   this line for final run
 
   # loop through each country
   for (countries in unique (allburden$country)) {
@@ -158,7 +163,7 @@ plot_cecx_burden_pre_post_vaccination <- function (allburden,
                               hpv_types, 
                               " pre- and post-vaccination \n (vaccination age = ",
                                 vaccination_age, 
-                                " years / vaccine = ", vaccine, ")" )
+                                " years / ", vaccine_type, " vaccine)" )
         # plot
         print (ggplot (country_burden,
                        aes (x = birthcohort, y = get(toplot), fill=age)) +
@@ -226,7 +231,7 @@ plot_cecx_burden_pre_post_vaccination <- function (allburden,
                             hpv_types, 
                             " pre- and post-vaccination \n (vaccination age = ",
                             vaccination_age, 
-                            " years / vaccine = ", vaccine, ")" )
+                            " years / ", vaccine_type, " vaccine)" )
       
       # plot
       print (ggplot (region_burden,
@@ -542,6 +547,11 @@ save_global_vaccine_impact_tables <- function (vaccine_impact,
 compute_vaccine_impact <- function (allburden, 
                                     vaccine, 
                                     vaccination_age) {
+  
+  # set vaccine type
+  vaccine_type <- switch (vaccine, 
+                          "4vHPV" = "bivalent/quadrivalent", 
+                          "9vHPV" = "nonavalent")
 
   # burden summary
   burden_summary <- allburden [ , .(total_cases  = sum (cases),
@@ -652,7 +662,7 @@ compute_vaccine_impact <- function (allburden,
           # "figures/Figure-Global_vaccine_impact.png",
           annotate_figure(q, 
                           top = text_grob(paste0 ("Lifetime health impact per 1000 vaccinated girls (global level) \n ",
-                                                  "(vaccination age = ", vaccination_age, " years / vaccine = ", vaccine, ")"), 
+                                                  "(vaccination age = ", vaccination_age, " years / ", vaccine_type, " vaccine)"), 
                                              color = "black", size = 12)),
           width=5, height=7.5, dpi=300)
 
@@ -680,6 +690,11 @@ compute_vaccine_impact <- function (allburden,
 compute_vaccine_impact_regional <- function (allburden, 
                                              vaccine, 
                                              vaccination_age) {
+  
+  # set vaccine type
+  vaccine_type <- switch (vaccine, 
+                          "4vHPV" = "bivalent/quadrivalent", 
+                          "9vHPV" = "nonavalent")
 
   # burden summary
   burden_summary <- allburden [ , .(total_cases  = sum (cases),
@@ -804,7 +819,7 @@ compute_vaccine_impact_regional <- function (allburden,
       print (annotate_figure(q,
                              top = text_grob (paste0("Lifetime health impact per 1000 vaccinated girls - ",
                                                      who_regions [who_region_code == regions, who_region_name],
-                                                     "\n (vaccination age = ", vaccination_age, " years / vaccine = ", vaccine, ")"),
+                                                     "\n (vaccination age = ", vaccination_age, " years / ", vaccine_type, " vaccine)"),
                                               color = "black", size = 12)))
     }
     toc ()
@@ -873,12 +888,6 @@ compute_vaccine_impact_regional <- function (allburden,
       rotate_x_text(angle = 45)
   })
 
-  # set vaccine type
-  vaccine_type <- switch (vaccine, 
-                          "4vHPV" = "bivalent/quadrivalent", 
-                          "9vHPV" = "nonavalent")
-  
-  
   # arrange plot columns and rows
   q <- ggarrange(plotlist=plot_list, ncol = 3, nrow = 1)
 
@@ -1186,9 +1195,13 @@ compute_vaccine_impact_country <- function (allburden,
 
   # save a copy -- vaccine impact data table of only updated simulation scenario
   vaccine_impact_table <- add_WHO_region (vaccine_impact_table)
+  
   fwrite (vaccine_impact_table [simulation == "s5"],
-          "results/Table-Vaccine_impact_s5_iso3.csv",
+          paste0 ("results/Table-Vaccine_impact_s5_iso3_age", 
+                  vaccination_age, "_", vaccine, ".csv"),
           col.names = T, row.names = F)
+  
+  
 
   # add country name from iso3 country code
   vaccine_impact_table [, Country := countrycode (vaccine_impact_table  [, country],
@@ -1225,8 +1238,10 @@ compute_vaccine_impact_country <- function (allburden,
 
   # save vaccine impact data table
   fwrite (vaccine_impact_table,
-          "appendix/Table-Vaccine_impact.csv",
+          paste0 ("appendix/Table-Vaccine_impact_age", 
+                  vaccination_age, "_", vaccine, ".csv"),
           col.names = T, row.names = F)
+  
 
   # ----------------------------------------------------------------------------
   # vaccine impact data table of only updated simulation scenario (s5)
@@ -1248,8 +1263,10 @@ compute_vaccine_impact_country <- function (allburden,
 
   # save save vaccine impact data table of only updated simulation scenario
   fwrite (vaccine_impact_table_s5,
-          "tables/Table-Vaccine_impact_country_PRIME_update.csv",
+          paste0 ("tables/Table-Vaccine_impact_country_PRIME_update_age", 
+                  vaccination_age, "_", vaccine, ".csv"),
           col.names = T, row.names = F)
+  
 
   # return vaccine impact table (shorter column names)
   return (vaccine_impact_tab)
@@ -1261,7 +1278,14 @@ compute_vaccine_impact_country <- function (allburden,
 # ------------------------------------------------------------------------------
 # vaccine impact -- country and scenario comparison
 # ------------------------------------------------------------------------------
-compare_vaccine_impact_country_scenario <- function (vaccine_impact_tab) {
+compare_vaccine_impact_country_scenario <- function (vaccine_impact_tab, 
+                                                     vaccine, 
+                                                     vaccination_age) {
+  
+  # set vaccine type
+  vaccine_type <- switch (vaccine, 
+                          "4vHPV" = "bivalent/quadrivalent", 
+                          "9vHPV" = "nonavalent")
 
   # ----------------------------------------------------------------------------
   # Which countries change the most from the update --
@@ -1274,8 +1298,10 @@ compare_vaccine_impact_country_scenario <- function (vaccine_impact_tab) {
 
   # plot file -- percentage change in scenarios (s2, s3, s4, s5) in comparison
   # to base scenario s1 -- cases, deaths, yll, yld & dalys averted per 1000 FVG
-  pdf ("appendix/Figure-Country_comparison_vaccine_impact_scenarios.pdf")
-
+  pdf (paste0 ("appendix/Figure-Country_comparison_vaccine_impact_scenarios_age",
+               vaccination_age, "_", vaccine, ".pdf"))
+  
+  
   for (scenarios in c("s2", "s3", "s4", "s5")) {
 
     # vaccine impact data table of only updated simulation scenario (s5)
@@ -1325,7 +1351,7 @@ compare_vaccine_impact_country_scenario <- function (vaccine_impact_tab) {
                 "Percentage change in DALYs averted")
 
 
-    # drop rows for Qatar and UAE (Globocan 2012 burden data ~ 0)
+    # drop rows for Qatar and UAE (Globocan 2012 burden data ~ 0) CHECK PSE?
     vaccine_impact_s1_s5 <- vaccine_impact_s1_s5 [country != "QAT" & country != "ARE"]
 
     plot_list = list ()
@@ -1342,7 +1368,9 @@ compare_vaccine_impact_country_scenario <- function (vaccine_impact_tab) {
                  # x = "Country",
                  x = NULL,
                  y = paste0 (y_axis[i], " per 1000 vaccinated girls"),
-                 title = paste0 (y_axis[i], " per 1000 vaccinated girls"),
+                 title = paste0 (y_axis[i], 
+                                 " per 1000 vaccinated girls", 
+                                 "\n (vaccination age = ", vaccination_age, " years / ", vaccine_type, " vaccine)"),
                  subtitle = paste0 ("Comparsion of scenario ", scenarios,
                                     " in comparison to scenario s1")
                )  +
@@ -1414,26 +1442,13 @@ for (vaccination_age in vaccination_ages) {
                                                           vaccine         = vaccine, 
                                                           vaccination_age = vaccination_age)
     
-  }
-}
-
-    
-    
-    
-
-    
-
-    
-
-    
-
-    
     # vaccine impact -- country and scenario comparison
-    compare_vaccine_impact_country_scenario (vaccine_impact_tab)
+    compare_vaccine_impact_country_scenario (vaccine_impact_tab,
+                                             vaccine         = vaccine, 
+                                             vaccination_age = vaccination_age)
     
   }
 }
-
 
 # ------------------------------------------------------------------------------
 print (Sys.time ())
