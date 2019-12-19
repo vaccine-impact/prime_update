@@ -17,7 +17,8 @@
 # Add column for number of vaccines administered
 # ------------------------------------------------------------------------------
 combine_burden_estimate <- function (vaccine, 
-                                     vaccination_age) {
+                                     vaccination_age, 
+                                     folder = "output/") {
 
   # simulation scenarios
   simulations = c("s1", "s2", "s3", "s4", "s5")
@@ -28,7 +29,7 @@ combine_burden_estimate <- function (vaccine,
 
     # read burden estimate of one simulation scenario
     # burdenfile <- paste0 ("output/", simulations[i], "_results.csv")
-    burdenfile <- paste0 ("output/", simulations[i], "_results_age", 
+    burdenfile <- paste0 (folder, simulations[i], "_results_age", 
                           vaccination_age, "_", vaccine, ".csv")
     
     burden <- fread (burdenfile, header = "auto", stringsAsFactors = F)
