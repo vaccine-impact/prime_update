@@ -133,9 +133,9 @@ plot_cecx_burden_pre_post_vaccination <- function (allburden,
                vaccination_age, "_", vaccine, ".pdf"))
 
   # what burden to plot
-  plotwhat = c("cases", "deaths", "yld", "yll", "dalys")
+  plotwhat <- c("cases", "deaths", "yld",  "yll",  "dalys")
 
-  y_axis <- c("Cases", "Deaths", "YLDs", "YLLs", "DALYs")
+  y_axis   <- c("Cases", "Deaths", "YLDs", "YLLs", "DALYs")
 
   # counter <- 0   # UNCOMMENT this line for final run
   counter <- 174   # COMMENT   this line for final run
@@ -338,11 +338,11 @@ plot_cecx_burden_pre_post_vaccination <- function (allburden,
 
     if (vaccine == "4vHPV") {
       plot_title <- c ("Global level \n Lifetime burden of cervical cancer (cases, deaths) \n caused by HPV 16/18 pre- and post-vaccination",
-                       "Global level \n Lifetime burden of cervical cancer (YLDs, YLLs, YLDs) \n caused by HPV 16/18 pre- and post-vaccination")
+                       "Global level \n Lifetime burden of cervical cancer (YLDs, YLLs, DALYs) \n caused by HPV 16/18 pre- and post-vaccination")
     }
     else if (vaccine == "9vHPV") {
       plot_title <- c ("Global level \n Lifetime burden of cervical cancer (cases, deaths) \n caused by HPV 16/18/31/33/45/52/58 pre- and post-vaccination",
-                       "Global level \n Lifetime burden of cervical cancer (YLDs, YLLs, YLDs) \n caused by HPV 16/18/31/33/45/52/58 pre- and post-vaccination")
+                       "Global level \n Lifetime burden of cervical cancer (YLDs, YLLs, DALYs) \n caused by HPV 16/18/31/33/45/52/58 pre- and post-vaccination")
     }
     
     # 1 plot for cases, deaths (and) another plot for ylds, ylls, dalys

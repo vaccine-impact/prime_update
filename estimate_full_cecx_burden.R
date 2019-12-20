@@ -158,9 +158,212 @@ estimate_all_cecx_burden <- function (simulation,
 
 
 # ------------------------------------------------------------------------------
+# plot cervical cancer burden (cases, deaths, yld, yll, dalys) pre- and post-vaccination
+# plot at global level
+# Note: all burden -- all cervical cancer cases (not just caused hpv types in vaccine)
+# ------------------------------------------------------------------------------
+plot_all_cecx_burden_pre_post_vaccination <- function (allburden_4v,
+                                                       allburden_9v,
+                                                       vaccination_age) {
+  
+  # ----------------------------------------------------------------------------
+  # burden comparison plot at the global level
+  # novaccination, 4vHPV and 9vHPV
+  # ----------------------------------------------------------------------------
+  
+  # plot file
+  pdf (paste0 ("results_all/Figure-Global_all_cecx_burden_pre_post_vaccination_age", 
+               vaccination_age, ".pdf"))
+  
+  # what burden to plot
+  plotwhat <- c("cases", "deaths", "yld", "yll", "dalys")
+  
+  y_axis   <- c("Cases", "Deaths", "YLDs", "YLLs", "DALYs")
+  
+  # ----------------------------------------------------------------------------
+  # apply sum function to burden columns
+  # dt[, lapply(.SD, sum, na.rm=TRUE), by=category ]
+  global_burden_4v <- allburden_4v [, lapply (.SD, sum),
+                                    .SDcols = c ("cases", "deaths", "yld", "yll", "dalys"),
+                                    by=.(age, scenario, type, simulation, birthcohort)]
+  
+  global_burden_9v <- allburden_9v [, lapply (.SD, sum),
+                                    .SDcols = c ("cases", "deaths", "yld", "yll", "dalys"),
+                                    by=.(age, scenario, type, simulation, birthcohort)]
+  
+  # ----------------------------------------------------------------------------
+  
+  # loop through vaccines -- 4vPHV and 9vHPV
+  for (j in 1:2) {
+    
+    # set variables based on vaccine (1 - 4vHPV or 2 - 9VHPV)
+    if (j == 1) {
+      
+      global_burden <- global_burden_4v 
+      vaccine_type  <- "bivalent/quadrivalent"
+      
+      
+    } else if (j == 2) {
+      
+      global_burden <- global_burden_9v 
+      vaccine_type  <- "nonavalent"
+    }
+    
+    # loop through each burden metric
+    for (i in 1:length (plotwhat)) {
+      
+      # burden metric
+      toplot = plotwhat[i]
+      
+      # plot title
+      plot_title <- paste0 ("Global",
+                            "\n Lifetime burden of cervical cancer ", 
+                            y_axis[i], 
+                            " pre- and post-vaccination \n (vaccination age = ", 
+                            vaccination_age, 
+                            " years / ", vaccine_type, " vaccine)")
+      
+      # plot
+      print (ggplot (global_burden,
+                     aes (x = birthcohort, y = get(toplot), fill=age)) +
+               geom_bar (stat="identity") +
+               scale_fill_gradientn (colours=rev(rainbow(5))) +
+               facet_grid (scenario ~ simulation) +
+               theme_bw (base_size = 8) +
+               labs (
+                 x="Year of birth",
+                 y=y_axis[i], 
+                 title = plot_title) + 
+               scale_x_continuous(breaks=seq(2011, 2020, 3)) +
+               theme (panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+               scale_y_continuous (labels = scales::comma)
+      )
+    }
+    
+  }
+  dev.off ()
+  
+  
+  # ----------------------------------------------------------------------------
+  # same plot as above but combine 4vHPV and 9VHPV in the same plot
+  
+  # loop through simulation scenarios
+  for (sim_scenario in c ("s1", "s2", "s3", "s4", "s5")) {
+    
+    # get global lifetime burden estimates for specific simulation scenario
+    global_burden_4v_simulation <- global_burden_4v [simulation == sim_scenario]
+    global_burden_9v_simulation <- global_burden_9v [simulation == sim_scenario]
+    
+    # add vaccine type to post-vaccination
+    global_burden_4v_simulation [scenario == "post-vaccination", scenario := 
+      "bivalent / quadrivalent vaccination"]
+    global_burden_9v_simulation [scenario == "post-vaccination", scenario := 
+                                   "nonavalent vaccination"]
+    
+    # create table of lifetime burden estimates with vaccine types -- 4vHPV & 9vHPV
+    global_burden <- rbind (global_burden_4v_simulation, 
+                            global_burden_9v_simulation [scenario == "nonavalent vaccination"], 
+                            use.names = TRUE)
+    
+    # ordering for plots
+    global_burden$scenario <- factor (global_burden$scenario, 
+                                      levels = c ("nonavalent vaccination", 
+                                                  "bivalent / quadrivalent vaccination", 
+                                                  "pre-vaccination") )
+    
+    # loop through 2 figures per simulation scenario
+    # fig1 -- "cases", "deaths", "dalys"
+    # fig2 -- "yld",  "yll",  "dalys"
+    for (j in 1:2) {
+      
+      # figure files
+      # j == 1 --> fig1 -- "cases", "deaths", "dalys"
+      # j == 2 --> fig2 -- "yld",  "yll",  "dalys"
+      if (j == 1) {
+        
+        png (paste0 ("figures_all/",
+                     sim_scenario, "_age", vaccination_age,
+                     "_Figure-Global_lifetime_all_burden_pre_post_vaccination_cases_deaths_dalys.png"), 
+             units="in", width=13, height=9.5, res=300)
+        
+        plotwhat <- c ("cases", "deaths", "dalys")
+        y_axis   <- c ("Cases", "Deaths", "DALYs")
+        
+      } else if (j == 2) {
+        
+        png (paste0 ("figures_all/", 
+                     sim_scenario, "_age", vaccination_age,
+                     "_Figure-Global_lifetime_all_burden_pre_post_vaccination_ylds_ylls_dalys.png"), 
+             units="in", width=13, height=9.5, res=300)
+        
+        plotwhat <- c ("yld",  "yll",  "dalys")
+        y_axis   <- c ("YLDs", "YLLs", "DALYs")
+      }
+      
+      # plot title
+      plot_title <- c ("Lifetime burden of cervical cancer (cases, deaths, DALYs) pre- and post-vaccination",
+                       "Lifetime burden of cervical cancer (YLDs, YLLs, DALYs) pre- and post-vaccination")
+      
+      
+      plot_list <- lapply (1:length(plotwhat), function (i) {
+        toplot <- plotwhat [i]
+        
+        p <- ggplot (global_burden,
+                     aes (x = birthcohort, y = get(toplot), fill=age)) +
+          geom_bar (stat="identity") +
+          scale_fill_gradientn(colours=rev(rainbow(5))) +
+          facet_grid(scenario ~ ., scales = "fixed") +
+          theme_bw (base_size = 10) +
+          labs (
+            x="Year of birth",
+            y=y_axis[i]) +
+          scale_x_continuous(breaks=seq(2011, 2020, 3)) +
+          # theme_minimal () +
+          theme (panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+          scale_y_continuous (labels = scales::comma) + 
+          # theme (axis.text.x = element_text(size=12)) +
+          theme (axis.text = element_text (size = 12)) + 
+          theme (strip.text.y = element_text (size = 12))  + 
+          theme (axis.title = element_text (size = 18)) + 
+          theme (legend.title = element_text (size = 15),
+                 legend.text  = element_text (size = 12)
+          )
+      })
+      
+      # arrange plots in a single page
+      q <- ggarrange (plotlist=plot_list, ncol = 3, nrow = 1)
+      
+      print (
+        annotate_figure (q,
+                         top = text_grob (paste0 (plot_title [j], 
+                                                  " \n (vaccination age = ", 
+                                                  vaccination_age,
+                                                  " years at 90% coverage)"),
+                                          color = "black",
+                                          size = 21)))
+      
+      # save figure file
+      dev.off ()
+    }
+    
+  }
+  
+  return ()  # return null
+  
+} # end of function -- plot_all_cecx_burden_pre_post_vaccination
+# ------------------------------------------------------------------------------
+
+
+
+# ------------------------------------------------------------------------------
 # start of program
 print (Sys.time ())
 # ------------------------------------------------------------------------------
+
+library (data.table)
+library (ggplot2)
+library (prime)
+library (ggpubr)
 
 # vaccination age and HPV vaccine type
 vaccination_ages <- c (9, 12)
@@ -198,6 +401,16 @@ allburden_4v <- combine_burden_estimate (vaccine         = vaccines [1],
 allburden_9v <- combine_burden_estimate (vaccine         = vaccines [2],
                                          vaccination_age = vaccination_ages [1],
                                          folder          = "output_all/")
+
+
+
+# plot cervical cancer burden (cases, deaths, yld, yll, dalys) pre- and post-vaccination
+# plot at global level
+# Note: all burden -- all cervical cancer cases (not just caused hpv types in vaccine)
+plot_all_cecx_burden_pre_post_vaccination (allburden_4v,
+                                           allburden_9v,
+                                           vaccination_age = vaccination_ages [1]) 
+
 
 
 # ------------------------------------------------------------------------------

@@ -30,14 +30,25 @@ Files:
 
 - map.R
     create maps of cervical cancer burden (caused by HPV 16/18) averted by HPV vaccination
+
+- estimate_full_cecx_burden.R
+    Compare burden estimates for all HPV types and comparing between vaccines (4vPHV and 9vHPV)
 --------------------------------------------------------------------------------    
 Folders:
 
 - output
     Output files of disease burden estimates for different scenarios.
+      (related to HPV types contained in the vaccine)
     
+- output_all
+    Output files of disease burden estimates for different scenarios.
+      (related to all HPV types, and not just the HPV types contained in the vaccine)
+
 - results
     Plots and tables of results
+
+- results_all
+    Plots at global level for all HPV types and comparing between vaccines (4vPHV and 9vHPV)
     
 - maps
     Global maps of country-level vaccine impact estimates
@@ -47,6 +58,9 @@ Folders:
     
 - figures
     Figures in the paper (main part)
+
+- figures_all
+    Figures in the paper (main part) for all HPV types and comparing between vaccines (4vPHV and 9vHPV)
     
 - tables
     Tables in the paper (main part) 
