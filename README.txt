@@ -68,8 +68,5 @@ Folders:
 - paper_results
     Results (numbers) for the paper
 
-- final
-    Final set of figures and tables for the paper
-
 --------------------------------------------------------------------------------
 
