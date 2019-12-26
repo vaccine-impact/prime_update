@@ -176,7 +176,7 @@ plot_cecx_burden_pre_post_vaccination <- function (allburden,
                    x="Year of birth",
                    y=y_axis[i],
                    title = plot_title) +
-                 scale_x_continuous(breaks=seq(2011, 2020, 3)) +
+                 scale_x_continuous(breaks=seq(2008, 2020, 3)) +
                  theme (panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
                  scale_y_continuous (labels = scales::comma)
         )
@@ -245,7 +245,7 @@ plot_cecx_burden_pre_post_vaccination <- function (allburden,
                  x="Year of birth",
                  y=y_axis[i],
                  title = plot_title) +
-               scale_x_continuous(breaks=seq(2011, 2020, 3)) +
+               scale_x_continuous(breaks=seq(2008, 2020, 3)) +
                theme (panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
                scale_y_continuous (labels = scales::comma)
       )
@@ -302,7 +302,7 @@ plot_cecx_burden_pre_post_vaccination <- function (allburden,
                x="Year of birth",
                y=y_axis[i],
                title = plot_title) +
-             scale_x_continuous(breaks=seq(2011, 2020, 3)) +
+             scale_x_continuous(breaks=seq(2008, 2020, 3)) +
              theme (panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
              scale_y_continuous (labels = scales::comma)
     )
@@ -366,7 +366,7 @@ plot_cecx_burden_pre_post_vaccination <- function (allburden,
         labs (
           x="Year of birth",
           y=y_axis[i]) +
-        scale_x_continuous(breaks=seq(2011, 2020, 3)) +
+        scale_x_continuous(breaks=seq(2008, 2020, 3)) +
         # theme_minimal () +
         theme (axis.text.x = element_text(size=6)) +
         theme (panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
