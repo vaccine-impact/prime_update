@@ -354,6 +354,58 @@ plot_all_cecx_burden_pre_post_vaccination <- function (allburden_4v,
 # ------------------------------------------------------------------------------
 
 
+# ------------------------------------------------------------------------------
+# Save country-level estimates of HPV vaccination impact for paper appendix.
+# The estimated lifetime impact of HPV vaccination of adolescent girls at 
+# 9-years or 12-years with bivalent/quadrivalent or nonavalent vaccines during 
+# 2020-2029 at 90% coverage in 177 countries. Cases, deaths, YLLs, YLDs and DALYs 
+# averted per 1000 vaccinated girls, after the combined PRIME updates for 
+# demography, disability weights and cervical cancer burden.
+# ------------------------------------------------------------------------------
+vaccine_impact_country_PRIME_update_age9_4vHPV_9vHPV_age12_4vHPV_9vHPV <- function () {
+  
+  # read in vaccine impact country level tables
+  age9_4vHPV <- fread (file = "tables/Table-Vaccine_impact_country_PRIME_update_age9_4vHPV.csv", 
+                       header = "auto", 
+                       stringsAsFactors = F)
+  
+  age9_9vHPV <- fread (file = "tables/Table-Vaccine_impact_country_PRIME_update_age9_9vHPV.csv", 
+                       header = "auto", 
+                       stringsAsFactors = F)
+  
+  age12_4vHPV <- fread (file = "tables/Table-Vaccine_impact_country_PRIME_update_age12_4vHPV.csv", 
+                        header = "auto", 
+                        stringsAsFactors = F)
+  
+  age12_9vHPV <- fread (file = "tables/Table-Vaccine_impact_country_PRIME_update_age12_9vHPV.csv", 
+                        header = "auto", 
+                        stringsAsFactors = F)
+  
+  # combine tables
+  age9_4vHPV_9vHPV <- age9_4vHPV [age9_9vHPV,
+                                  on = .(Country = Country)]
+  
+  age12_4vHPV_9vHPV <- age12_4vHPV [age12_9vHPV,
+                                    on = .(Country = Country)]
+  
+  age9_4vHPV_9vHPV_age12_4vHPV_9vHPV <- age9_4vHPV_9vHPV [age12_4vHPV_9vHPV, 
+                                                          on = .(Country = Country)]
+  
+  
+  # save full vaccine impact country table (single table)
+  # The estimated lifetime impact of HPV vaccination of adolescent girls at 
+  # 9-years or 12-years with bivalent/quadrivalent or nonavalent vaccines during 
+  # 2020-2029 at 90% coverage in 177 countries.
+  fwrite (age9_4vHPV_9vHPV_age12_4vHPV_9vHPV,
+          file = "tables/Table-Vaccine_impact_country_PRIME_update_age9_4vHPV_9vHPV_age12_4vHPV_9vHPV.csv",
+          col.names = T, 
+          row.names = F)
+  
+  return ()  # return null
+  
+} # end of function -- vaccine_impact_country_PRIME_update_age9_4vHPV_9vHPV_age12_4vHPV_9vHPV
+# ------------------------------------------------------------------------------
+
 
 # ------------------------------------------------------------------------------
 # start of program
@@ -417,6 +469,13 @@ for (vaccination_age in vaccination_ages) {
 
 }
 # ------------------------------------------------------------------------------
+
+
+# ------------------------------------------------------------------------------
+# Save country-level estimates of HPV vaccination impact for paper appendix.
+vaccine_impact_country_PRIME_update_age9_4vHPV_9vHPV_age12_4vHPV_9vHPV ()
+# ------------------------------------------------------------------------------
+
 
 
 # ------------------------------------------------------------------------------
