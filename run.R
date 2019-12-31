@@ -10,11 +10,12 @@ library (ggplot2)       # graphics
 library (tictoc)        # timing R scripts
 library (foreach)       # looping -- supports parallel execution
 library (doParallel)    # Foreach Parallel Adaptor for the 'parallel' Package
-library (countrycode)
+library (countrycode)   # country codes (iso3)
 library (ggforce)
 library (ggpubr)
-library (rworldmap)
+library (rworldmap)     # maps
 library (scales)
+library (pdftools)      # combine pdf files
 library (prime)         # PRIME model
 
 
