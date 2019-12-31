@@ -1,4 +1,5 @@
-library (pdftools)
+# File: combine_figures_tables.R
+# Combine figures and tables for paper appendix
 
 # ------------------------------------------------------------------------------
 # Combine figures 
@@ -60,13 +61,52 @@ combine_figures <- function () {
 # Combine tables 
 # appendix: combine tables (csv files) for different vaccination ages and vaccines 
 # ------------------------------------------------------------------------------
-combine_tables <- function () {
+combine_tables <- function (table_file) {
   
-  # Table-Cervical_cancer_burden
+  # change to appendix sub-folder
+  setwd ("./appendix")
   
+  # read in table files for different vaccination ages and vaccines
+  age9_4vHPV <- fread (paste0 (table_file, "_age9_4vHPV.csv"), 
+                       header = "auto", stringsAsFactors = F)
   
+  age9_9vHPV <- fread (paste0 (table_file, "_age9_9vHPV.csv"), 
+                       header = "auto", stringsAsFactors = F)
   
-  # Table-Vaccine_impact
+  age12_4vHPV <- fread (paste0 (table_file, "_age12_4vHPV.csv"), 
+                       header = "auto", stringsAsFactors = F)
+  
+  age12_9vHPV <- fread (paste0 (table_file, "_age12_9vHPV.csv"), 
+                       header = "auto", stringsAsFactors = F)
+  
+  # add 2 columns for vaccination age and vaccine
+  age9_4vHPV [, `:=` ('Vaccination age (years)' = 9, 
+                      'HPV vaccine' = "bivalent/quadrivalent")]
+  
+  age9_9vHPV [, `:=` ('Vaccination age (years)' = 9, 
+                      'HPV vaccine' = "nonavalent")]
+  
+  age12_4vHPV [, `:=` ('Vaccination age (years)' = 12, 
+                      'HPV vaccine' = "bivalent/quadrivalent")]
+  
+  age12_9vHPV [, `:=` ('Vaccination age (years)' = 12, 
+                      'HPV vaccine' = "nonavalent")]
+  
+  # column order
+  setcolorder (age9_4vHPV, c ("Vaccination age (years)", "HPV vaccine") )
+  setcolorder (age9_9vHPV, c ("Vaccination age (years)", "HPV vaccine") )
+  setcolorder (age12_4vHPV, c ("Vaccination age (years)", "HPV vaccine") )
+  setcolorder (age12_9vHPV, c ("Vaccination age (years)", "HPV vaccine") )
+  
+  # combine tables (CONTINUE)
+  combined_table <- rbindlist (list (age9_4vHPV, age9_9vHPV, age12_4vHPV, age12_9vHPV), 
+                               use.names = TRUE)
+    
+  # save combined table to file
+  fwrite (combined_table, file = paste0 (table_file, ".csv"))
+  
+  # change back to main folder
+  setwd ("../")
   
   
 } # end of function -- combine_tables
@@ -79,7 +119,8 @@ combine_figures ()
 
 # Combine tables 
 # appendix: combine tables (csv files) for different vaccination ages and vaccines
-combine_tables ()
+combine_tables (table_file = "Table-Cervical_cancer_burden")  # cervical cancer burden 
+combine_tables (table_file = "Table-Vaccine_impact")          # vaccine impact
 # ------------------------------------------------------------------------------
 
 

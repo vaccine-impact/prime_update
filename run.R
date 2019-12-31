@@ -46,4 +46,7 @@ vaccines         <- c ("4vHPV", "9vHPV")
 # in the vaccine)
 # source ("estimate_full_cecx_burden.R")  #### UNCOMMENT this line for full run
 
+# Combine figures and tables for paper appendix
+# source ("combine_figures_tables.R")  #### UNCOMMENT this line for full run
+
 toc ()

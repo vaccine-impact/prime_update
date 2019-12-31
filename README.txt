@@ -33,6 +33,9 @@ Files:
 
 - estimate_full_cecx_burden.R
     Compare burden estimates for all HPV types and comparing between vaccines (4vPHV and 9vHPV)
+
+- combine_figures_tables.R
+    Combine figures and tables for paper appendix
 --------------------------------------------------------------------------------    
 Folders:
 
