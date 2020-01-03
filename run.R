@@ -33,20 +33,22 @@ vaccines         <- c ("4vHPV", "9vHPV")
 # vaccines         <- c ("4vHPV")
 
 # generate burden estimates for all 5 scenarios
-# source ("batchrun.R")  #### UNCOMMENT this line for full run
+source ("batchrun.R")  #### UNCOMMENT this line for full run
 
 # compare burden estimates and vaccination impact from the 5 scenarios
-# source ("analyse.R")  #### UNCOMMENT this line for full run
+source ("analyse.R")  #### UNCOMMENT this line for full run
 
 # create maps of cervical cancer burden (caused by HPV 16/18) averted by HPV vaccination
-# source ("map.R")  #### UNCOMMENT this line for full run
+source ("map.R")  #### UNCOMMENT this line for full run
 
 # Estimate cervical cancer burden estimates for different scenarios.
 # (not just the cervical cancer burden attributable to HPV types contained
 # in the vaccine)
-# source ("estimate_full_cecx_burden.R")  #### UNCOMMENT this line for full run
+source ("estimate_full_cecx_burden.R")  #### UNCOMMENT this line for full run
 
 # Combine figures and tables for paper appendix
-# source ("combine_figures_tables.R")  #### UNCOMMENT this line for full run
+source ("combine_figures_tables.R")  #### UNCOMMENT this line for full run
 
+# stop time
+print (Sys.time ())
 toc ()
