@@ -74,10 +74,11 @@ create_map <- function (vaccine_impact,
     # labs (title = "Cases averted per 1000 vaccinated girls", 
     #       subtitle = paste0 ("(vaccination age = ", vaccination_age,  
     #                          " years / vaccine = ", vaccine_type, " vaccine)") ) + 
-    theme(legend.title = element_blank()) + 
-    theme(axis.text.x = element_blank(), axis.ticks = element_blank()) + 
-    theme(axis.text.y = element_blank(), axis.ticks = element_blank()) + 
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+    theme (legend.title = element_blank()) + 
+    theme (axis.text.x = element_blank(), axis.ticks = element_blank()) + 
+    theme (axis.text.y = element_blank(), axis.ticks = element_blank()) + 
+    theme (panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
+    theme (plot.title = element_text(size = 10))
   
   ggsave (paste0 ("maps/", scenario, "_cases_averted_per1000FVG.png"), 
           width = 6, height = 6, dpi = "screen")
@@ -93,7 +94,8 @@ create_map <- function (vaccine_impact,
     theme(legend.title = element_blank()) + 
     theme(axis.text.x = element_blank(), axis.ticks = element_blank()) + 
     theme(axis.text.y = element_blank(), axis.ticks = element_blank()) + 
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
+    theme (plot.title = element_text(size = 10))
   
   ggsave (paste0 ("maps/", scenario, "_deaths_averted_per1000FVG.png"), 
           width = 6, height = 6, dpi = "screen")
@@ -109,7 +111,8 @@ create_map <- function (vaccine_impact,
     theme(legend.title = element_blank()) + 
     theme(axis.text.x = element_blank(), axis.ticks = element_blank()) + 
     theme(axis.text.y = element_blank(), axis.ticks = element_blank()) + 
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
+    theme (plot.title = element_text(size = 10))
   
   ggsave (paste0 ("maps/", scenario, "_ylds_averted_per1000FVG.png"), 
           width = 6, height = 6, dpi = "screen")
@@ -125,7 +128,8 @@ create_map <- function (vaccine_impact,
     theme(legend.title = element_blank()) + 
     theme(axis.text.x = element_blank(), axis.ticks = element_blank()) + 
     theme(axis.text.y = element_blank(), axis.ticks = element_blank()) + 
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
+    theme (plot.title = element_text(size = 10))
   
   ggsave (paste0 ("maps/", scenario, "_ylls_averted_per1000FVG.png"), 
           width = 6, height = 6, dpi = "screen")
@@ -141,7 +145,8 @@ create_map <- function (vaccine_impact,
     theme(legend.title = element_blank()) + 
     theme(axis.text.x = element_blank(), axis.ticks = element_blank()) + 
     theme(axis.text.y = element_blank(), axis.ticks = element_blank()) + 
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
+    theme (plot.title = element_text(size = 10))
   
   ggsave (paste0 ("maps/", scenario, "_dalys_averted_per1000FVG.png"), 
           width = 6, height = 7, dpi = "screen")
@@ -164,11 +169,30 @@ create_map <- function (vaccine_impact,
   
   # save a copy of s5 map (cases, deaths, dalys) without mentioning s5 in the map
   if (scenario == "s5") {
-    s5_map <- ggarrange (plotlist=plot_list, ncol = 1, nrow = 3)
+    
+    label_name_s5 <- paste0 ("Lifetime health impact of ", vaccine_type, 
+                          " HPV vaccination of ", vaccination_age, 
+                          "-year-old girls")
+    
+    s5_map <- ggarrange (plotlist=plot_list, ncol = 1, nrow = 3, 
+                         labels = label_name_s5, 
+                         font.label = list (size = 11, color = "black", 
+                                            face = "plain", family = NULL), 
+                         hjust = -0.05
+                         )
+    
     ggsave (filename = paste0 ("figures/Figure-Map_s5_burden_averted_per1000FVG_cases_deaths_dalys_age", 
                                vaccination_age, "_", vaccine, ".png"),
             plot = s5_map, 
-            width = 6, height = 7.5, units="in", dpi = 300)
+            width = 6, height = 8, units="in", dpi = 300)
+    
+    # --------------------------------------------------------------------------
+    # save figure in eps format for paper 
+    ggsave (filename = paste0 ("figures/Figure-Map_s5_burden_averted_per1000FVG_cases_deaths_dalys_age", 
+                               vaccination_age, "_", vaccine, ".eps"),
+            plot = s5_map, 
+            width = 6, height = 8.0, units="in")
+    # --------------------------------------------------------------------------
   }
   
   # print plot of maps
@@ -179,8 +203,8 @@ create_map <- function (vaccine_impact,
   plot_list <- list (ylds_a, ylls_a, dalys_a)
   q <- ggarrange (plotlist=plot_list, ncol = 1, nrow = 3, 
                   labels = label_name, 
-                  font.label = list (size = 6, color = "black", face =
-                                       "plain", family = NULL), 
+                  font.label = list (size = 6, color = "black", 
+                                     face = "plain", family = NULL), 
                   hjust = -1.6)
   
   # print plot of maps
@@ -249,7 +273,7 @@ for (vaccination_age in vaccination_ages) {
          split  = TRUE)
     
     # create map
-    for (i in c("s1", "s2", "s3", "s4", "s5")) {
+    for (i in c("s1", "s2", "s3", "s4", "s5")) {   
 
       # extract rows for a specific scenario
       vaccine_impact_scenario <- vaccine_impact [Scenario == i]

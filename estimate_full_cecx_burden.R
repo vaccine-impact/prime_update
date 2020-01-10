@@ -336,14 +336,42 @@ plot_all_cecx_burden_pre_post_vaccination <- function (allburden_4v,
       print (
         annotate_figure (q,
                          top = text_grob (paste0 (plot_title [j],
-                                                  " \n (vaccination age = ",
+                                                  " \n (HPV vaccination of ",
                                                   vaccination_age,
-                                                  " years at 90% coverage)"),
+                                                  "-year-old girls at 90% coverage)"),
                                           color = "black",
                                           size = 21)))
 
       # save figure file
       dev.off ()
+      
+      # ------------------------------------------------------------------------
+      # save figure in eps format for paper
+      setEPS ()
+      
+      # assign filename
+      if (j == 1) {
+        file_name <- paste0 ("figures_all/",
+                             sim_scenario, "_age", vaccination_age,
+                             "_Figure-Global_lifetime_all_burden_pre_post_vaccination_cases_deaths_dalys.eps")
+      } else if (j == 2) {
+        file_name <- paste0 ("figures_all/",
+                             sim_scenario, "_age", vaccination_age,
+                             "_Figure-Global_lifetime_all_burden_pre_post_vaccination_ylds_ylls_dalys.eps")
+      }
+      
+      postscript (file = file_name, width = 13, height = 9.5)
+      
+      print (
+        annotate_figure (q,
+                         top = text_grob (paste0 (plot_title [j],
+                                                  " \n (HPV vaccination of ",
+                                                  vaccination_age,
+                                                  "-year-old girls at 90% coverage)"),
+                                          color = "black",
+                                          size = 21)))
+      dev.off ()
+      # ------------------------------------------------------------------------
     }
 
   }

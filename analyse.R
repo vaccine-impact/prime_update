@@ -901,13 +901,38 @@ compute_vaccine_impact_regional <- function (allburden,
                              vaccination_age, "_", vaccine, ".png"),
           plot = annotate_figure(q,
                           top = text_grob (paste0 ("Lifetime health impact per 1000 vaccinated girls (regional level)",
-                                                   "\n (vaccination age = ", vaccination_age, " years / ", vaccine_type, " vaccine)"),
+                                                   "\n (", vaccine_type, " HPV vaccination of ", vaccination_age, "-year-old girls)"), 
+                                                 # "\n (vaccination age = ", vaccination_age, " years / ", vaccine_type, " vaccine)"),
                                            color = "black", size = 10)),
           units="in", width=6, height=3, dpi=300)
 
 
   # dev.off ()
   # ----------------------------------------------------------------------------
+  
+  # ------------------------------------------------------------------------
+  # save figure in eps format for paper
+  setEPS ()
+  
+  # assign filename
+  file_name <- paste0 ("figures/Figure-WHOregion_updated_vaccine_impact_age",
+                         vaccination_age, "_", vaccine, ".eps")
+
+  postscript (file = file_name, width = 6, height = 3)
+  
+  print (
+    annotate_figure(q,
+                    top = text_grob (paste0 ("Lifetime health impact per 1000 vaccinated girls (regional level)",
+                                             "\n (", vaccine_type, " HPV vaccination of ", vaccination_age, "-year-old girls)"), 
+                                            # "\n (vaccination age = ", vaccination_age, " years / ", vaccine_type, " vaccine)"),
+                                     color = "black", size = 10)) )
+  dev.off ()
+  # ------------------------------------------------------------------------
+  
+  
+  
+  
+  
 
   # save streamlined table of vaccine impact
   # who_region, simulation, (cases, deaths, ylds, ylls, dalys) averted per 1000 FVG
@@ -1417,6 +1442,7 @@ for (vaccination_age in vaccination_ages) {
     # Add WHO burden region (column)
     allburden <- add_WHO_region (allburden)
 
+    # --
     # plot cervical cancer burden (cases, deaths, yld, yll, dalys) pre- and post-vaccination
     # plot for each country and at global level
     plot_cecx_burden_pre_post_vaccination (allburden,
@@ -1432,12 +1458,14 @@ for (vaccination_age in vaccination_ages) {
     compute_vaccine_impact (allburden,
                             vaccine         = vaccine,
                             vaccination_age = vaccination_age)
+    # --
 
     # compute vaccine impact -- regional level
     compute_vaccine_impact_regional (allburden,
                                      vaccine         = vaccine,
                                      vaccination_age = vaccination_age)
 
+    # --
     # compute vaccine impact -- country level
     vaccine_impact_tab <- compute_vaccine_impact_country (allburden,
                                                           vaccine         = vaccine,
@@ -1447,7 +1475,8 @@ for (vaccination_age in vaccination_ages) {
     compare_vaccine_impact_country_scenario (vaccine_impact_tab,
                                              vaccine         = vaccine,
                                              vaccination_age = vaccination_age)
-
+    # --
+      
   }
 }
 
