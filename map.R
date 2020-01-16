@@ -57,19 +57,28 @@ create_map <- function (vaccine_impact,
   
   # map tutorial
   # https://www.r-spatial.org/r/2018/10/25/ggplot2-sf.html
-  world <- ne_countries (scale = "medium", returnclass = "sf")
+  world <- ne_countries (scale       = "medium", 
+                         returnclass = "sf")
   setDT (world)
+  setkey (world, iso_a3)
   
   # ------------------------------------------------------------------------------
   theme_set(theme_bw())
   
   # combine tables to add geometry
-  dt <- world [vaccine_impact, on = .(iso_a3 = country)]
+  # dt <- world [vaccine_impact, on = .(iso_a3 = country)]
+  dt <- merge (x    = vaccine_impact, 
+               y    = world, 
+               by.x = "country", 
+               by.y = "iso_a3", 
+               all  = T
+  )
+  # dt <- dt [!is.na (country)]
   
   # map of cases averted per 1000 vaccinated girls
   cases_a <- ggplot(data = dt) +
     geom_sf (aes(fill = cases_averted_perVG, geometry = geometry)) + 
-    scale_fill_viridis_c(option = "plasma", direction = -1) +
+    scale_fill_viridis_c(option = "plasma", direction = -1, na.value = "grey90") +
     ggtitle ("Cases averted per 1000 vaccinated girls") + 
     # labs (title = "Cases averted per 1000 vaccinated girls", 
     #       subtitle = paste0 ("(vaccination age = ", vaccination_age,  
@@ -86,7 +95,7 @@ create_map <- function (vaccine_impact,
   # map of deaths averted per 1000 vaccinated girls
   deaths_a <- ggplot(data = dt) +
     geom_sf (aes(fill = deaths_averted_perVG, geometry = geometry)) + 
-    scale_fill_viridis_c(option = "plasma", direction = -1) +
+    scale_fill_viridis_c(option = "plasma", direction = -1, na.value = "grey90") +
     ggtitle ("Deaths averted per 1000 vaccinated girls") + 
     # labs (title = "Deaths averted per 1000 vaccinated girls", 
     #       subtitle = paste0 ("(vaccination age = ", vaccination_age,  
@@ -103,7 +112,7 @@ create_map <- function (vaccine_impact,
   # map of YLDs averted per 1000 vaccinated girls
   ylds_a <- ggplot(data = dt) +
     geom_sf (aes(fill = yld_averted_perVG, geometry = geometry)) + 
-    scale_fill_viridis_c(option = "plasma", direction = -1) + 
+    scale_fill_viridis_c(option = "plasma", direction = -1, na.value = "grey90") + 
     ggtitle ("YLDs averted per 1000 vaccinated girls") + 
     # labs (title = "YLDs averted per 1000 vaccinated girls", 
     #       subtitle = paste0 ("(vaccination age = ", vaccination_age,  
@@ -120,7 +129,7 @@ create_map <- function (vaccine_impact,
   # map of YLLs averted per 1000 vaccinated girls
   ylls_a <- ggplot(data = dt) +
     geom_sf (aes(fill = yll_averted_perVG, geometry = geometry)) + 
-    scale_fill_viridis_c(option = "plasma", direction = -1) + 
+    scale_fill_viridis_c(option = "plasma", direction = -1, na.value = "grey90") + 
     ggtitle ("YLLs averted per 1000 vaccinated girls") + 
     # labs (title = "YLLs averted per 1000 vaccinated girls", 
     #       subtitle = paste0 ("(vaccination age = ", vaccination_age,  
@@ -137,7 +146,7 @@ create_map <- function (vaccine_impact,
   # map of DALYs averted per 1000 vaccinated girls
   dalys_a <- ggplot(data = dt) +
     geom_sf (aes(fill = dalys_averted_perVG, geometry = geometry)) + 
-    scale_fill_viridis_c(option = "plasma", direction = -1) + 
+    scale_fill_viridis_c(option = "plasma", direction = -1, na.value = "grey90") + 
     ggtitle ("DALYs averted per 1000 vaccinated girls") + 
     # labs (title = "DALYs averted per 1000 vaccinated girls", 
     #       subtitle = paste0 ("(vaccination age = ", vaccination_age,  
@@ -184,14 +193,14 @@ create_map <- function (vaccine_impact,
     ggsave (filename = paste0 ("figures/Figure-Map_s5_burden_averted_per1000FVG_cases_deaths_dalys_age", 
                                vaccination_age, "_", vaccine, ".png"),
             plot = s5_map, 
-            width = 6, height = 8, units="in", dpi = 300)
+            width = 6, height = 9.5, units="in", dpi = 300)
     
     # --------------------------------------------------------------------------
     # save figure in eps format for paper 
     ggsave (filename = paste0 ("figures/Figure-Map_s5_burden_averted_per1000FVG_cases_deaths_dalys_age", 
                                vaccination_age, "_", vaccine, ".eps"),
             plot = s5_map, 
-            width = 6, height = 8.0, units="in")
+            width = 6, height = 9.5, units="in")
     # --------------------------------------------------------------------------
   }
   
@@ -273,7 +282,9 @@ for (vaccination_age in vaccination_ages) {
          split  = TRUE)
     
     # create map
-    for (i in c("s1", "s2", "s3", "s4", "s5")) {   
+    for (i in c("s1", "s2", "s3", "s4", "s5")) {  ## UNCOMMENT this line for final run
+    # for (i in c("s5")) {  ## COMMENT this line for final run  
+      
 
       # extract rows for a specific scenario
       vaccine_impact_scenario <- vaccine_impact [Scenario == i]
