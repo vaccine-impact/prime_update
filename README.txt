@@ -7,10 +7,10 @@ assess the health impact estimates in the PRIME model.
 Scenarios | Demography   | Disability weights | Cervical cancer burden
 --------------------------------------------------------------------------------
 s1        | WHO (2009)   | GBD 2001           | GLOBOCAN 2012
-s2        | UNWPP (2017) | GBD 2001           | GLOBOCAN 2012
+s2        | UNWPP (2019) | GBD 2001           | GLOBOCAN 2012
 s3        | WHO (2009)   | GBD 2017           | GLOBOCAN 2012
 s4        | WHO (2009)   | GBD 2001           | GLOBOCAN 2018
-s5        | UNWPP (2017) | GBD 2017           | GLOBOCAN 2018
+s5        | UNWPP (2019) | GBD 2017           | GLOBOCAN 2018
 --------------------------------------------------------------------------------
 
 
